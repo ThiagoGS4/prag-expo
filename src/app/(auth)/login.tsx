@@ -1,14 +1,23 @@
-import * as Device from "expo-device";
-import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-
 import { AnimatedIcon } from "@/components/animated-icon";
 import { LogResModal } from "@/components/log_res_modal";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
+import { checkLogin } from "@/helpers/utils";
+import { axiosInstance } from "@/services/api";
+import * as Device from "expo-device";
 import { router } from "expo-router";
-import { useState } from "react";
+import * as SecureStore from "expo-secure-store";
+import { useCallback, useEffect, useState } from "react";
+import {
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 function getDevMenuHint() {
   if (Platform.OS === "web") {
@@ -30,7 +39,42 @@ function getDevMenuHint() {
 }
 
 export default function HomeScreen() {
+  const [isLogged, setIslogged] = useState(false);
   const [modal, setModal] = useState(false);
+  const [loginForm, setLoginForm] = useState<{
+    username: string;
+    password: string;
+  }>({
+    username: "",
+    password: "",
+  });
+
+  const setLogin = useCallback(() => {
+    async function handleLogin() {
+      try {
+        const res = await axiosInstance.post("/logar", loginForm);
+        SecureStore.setItem("accessToken", res.data.accessToken);
+        setModal(false);
+        router.push("/(tabs)/home");
+        return res.data;
+      } catch (error) {
+        console.log("error ->", error);
+      }
+    }
+
+    handleLogin();
+  }, [loginForm]);
+
+  useEffect(() => {
+    const verify = async () => {
+      const check = await checkLogin();
+      if (check) {
+        router.push("/(tabs)/home");
+      }
+    };
+
+    verify();
+  }, []);
 
   return (
     <ThemedView style={styles.container}>
@@ -65,7 +109,28 @@ export default function HomeScreen() {
         <LogResModal
           openModal={modal}
           onClose={() => setModal(false)}
-        ></LogResModal>
+          onAction={() => setLogin()}
+        >
+          <TextInput
+            placeholder="usuário"
+            onChangeText={(texto) =>
+              setLoginForm((prev) => ({ ...prev, username: texto }))
+            }
+            value={loginForm.username}
+            style={styles.inputBox}
+          />
+          <TextInput
+            placeholder="senha"
+            onChangeText={(texto) =>
+              setLoginForm((prev) => ({ ...prev, password: texto }))
+            }
+            value={loginForm.password}
+            secureTextEntry
+            autoCapitalize="none"
+            autoCorrect={false}
+            style={styles.inputBox}
+          />
+        </LogResModal>
       </SafeAreaView>
     </ThemedView>
   );
@@ -108,5 +173,11 @@ const styles = StyleSheet.create({
     paddingLeft: 12,
     paddingRight: 12,
     backgroundColor: "#FFFFFF",
+  },
+  inputBox: {
+    padding: 7,
+    height: 32,
+    borderWidth: 1,
+    borderRadius: 10,
   },
 });

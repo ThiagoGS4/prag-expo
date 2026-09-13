@@ -8,11 +8,6 @@ const freeRoutes = ["/login", "/refreshLogin", "/register"];
 export const axiosInstance = axios.create({
   baseURL: apiUrl,
   timeout: 5000,
-  headers: {
-    Authorization: extractAccessToken()
-      ? `Bearer ${extractAccessToken()}`
-      : null,
-  },
 });
 
 function extractAccessToken() {
@@ -21,6 +16,11 @@ function extractAccessToken() {
 
 axiosInstance.interceptors.request.use(
   (config) => {
+    console.log(
+      `🚀 [${config.method?.toUpperCase()}] ${config.baseURL}${config.url}`,
+    );
+    if (config.data) console.log("📦 Payload:", config.data);
+
     const token = extractAccessToken();
     if (token) {
       config.headers["Authorization"] = "Bearer " + token;
@@ -28,12 +28,17 @@ axiosInstance.interceptors.request.use(
     return config;
   },
   (error) => {
+    console.log("error -> ", error);
+
     return Promise.reject(error);
   },
 );
 
 axiosInstance.interceptors.response.use(
   (res) => {
+    console.log(
+      `✅ [${res.config.method?.toUpperCase()}] ${res.config.url} | Status: ${res.status}`,
+    );
     return res;
   },
   async (err) => {

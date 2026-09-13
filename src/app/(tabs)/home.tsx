@@ -3,7 +3,6 @@ import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { AnimatedIcon } from "@/components/animated-icon";
-import { LogResModal } from "@/components/log_res_modal";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
@@ -29,7 +28,7 @@ function getDevMenuHint() {
 }
 
 export default function HomeScreen() {
-  const [modal, setModal] = useState(false);
+  const [modal, setModal] = useState(false); //todo: fazer home, colocar todas as rotas nas tabs
 
   return (
     <ThemedView style={styles.container}>
@@ -37,7 +36,7 @@ export default function HomeScreen() {
         <View style={styles.heroSection}>
           <AnimatedIcon />
           <ThemedText type="title" style={styles.title}>
-            Domus Target
+            Domus Target (HOME)
           </ThemedText>
         </View>
 
@@ -50,11 +49,6 @@ export default function HomeScreen() {
         <Pressable onTouchEnd={() => setModal(true)}>
           <Text>Login</Text>
         </Pressable>
-
-        <LogResModal
-          openModal={modal}
-          onClose={() => setModal(false)}
-        ></LogResModal>
       </SafeAreaView>
     </ThemedView>
   );
