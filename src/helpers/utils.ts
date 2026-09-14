@@ -17,3 +17,25 @@ export async function checkLogin() {
     }
   }
 }
+
+export const extractTokenClaims = (token: string | null) => {
+  try {
+    const base64Url = token ? token.split(".")[1] : "";
+
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join(""),
+    );
+
+    const username = JSON.parse(jsonPayload).sub;
+
+    return username ?? "";
+  } catch (error) {
+    console.error("Failed to parse token claims:", error);
+    return null;
+  }
+};

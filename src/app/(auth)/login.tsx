@@ -54,6 +54,7 @@ export default function HomeScreen() {
       try {
         const res = await axiosInstance.post("/logar", loginForm);
         SecureStore.setItem("accessToken", res.data.accessToken);
+        SecureStore.setItem("refreshToken", res.data.refreshToken);
         setModal(false);
         router.push("/(tabs)/home");
         return res.data;

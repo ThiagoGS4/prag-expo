@@ -28,6 +28,21 @@ export default function AppTabs() {
       label: "Customers",
       icon: require("@/assets/images/tabIcons/explore.png"),
     },
+    {
+      name: "properties",
+      label: "Properties",
+      icon: require("@/assets/images/tabIcons/explore.png"),
+    },
+    {
+      name: "audit-log",
+      label: "AuditLog",
+      icon: require("@/assets/images/tabIcons/explore.png"),
+    },
+    {
+      name: "data-options",
+      label: "DataOptions",
+      icon: require("@/assets/images/tabIcons/explore.png"),
+    },
   ];
 
   async function checkLogin() {
