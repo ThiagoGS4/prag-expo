@@ -5,7 +5,7 @@ import { extractTokenClaims } from "@/helpers/utils";
 import { Feather as Icon } from "@react-native-vector-icons/feather";
 import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -30,7 +30,7 @@ export default function HomeScreen() {
     dataAtual,
   );
 
-  useState(() => {
+  useEffect(() => {
     const extractClaims = () => {
       return extractTokenClaims(SecureStore.getItem("accessToken"));
     };
