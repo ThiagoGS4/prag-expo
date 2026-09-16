@@ -43,6 +43,8 @@ export default function SchedulesScreen() {
   const [scheduleList, setScheduleList] = useState<ISchedule[]>([]);
   const [openModal, setOpenModal] = useState(false);
   const [mainForm, setMainForm] = useState<IFormData>();
+  const [deleteId, setDeleteId] = useState<number>();
+  const [deleteModal, setDeleteModal] = useState(false);
   const [plagueList, setPlagueList] = useState();
   const [statusList, setStatusList] = useState();
   const [serviceList, setServiceList] = useState();
@@ -170,6 +172,11 @@ export default function SchedulesScreen() {
     setOpenModal(true);
   }
 
+  function openDeleteModal(id: number) {
+    setDeleteId(id);
+    setDeleteModal(true);
+  }
+
   function openInsertModal() {
     setOpenModal(true);
   }
@@ -177,7 +184,9 @@ export default function SchedulesScreen() {
   function closeClean() {
     setIsEditing(false);
     setOpenModal(false);
+    setDeleteModal(false);
     setMainForm(undefined);
+    setDeleteId(undefined);
   }
 
   async function submitForm() {
@@ -210,8 +219,45 @@ export default function SchedulesScreen() {
     }
   }
 
+  async function deleteSchedule() {
+    if (!deleteId) return;
+    try {
+      await axiosInstance.delete(`/schedules/${deleteId}`);
+      try {
+        const resp = await axiosInstance.get("/schedules");
+        setScheduleList(resp.data);
+        closeClean();
+      } catch (error) {
+        console.error("Erro ao atualizar lista após deletar:", error);
+      }
+    } catch (error) {
+      console.error("Erro ao deletar agendamento:", error);
+    }
+  }
+
   return (
     <View style={{ flex: 1, paddingTop: "10%" }}>
+      <Modal visible={deleteModal} transparent={true}>
+        <View style={styles.container}>
+          <View style={styles.formModalBody}>
+            <Text
+              style={{ fontSize: 16, textAlign: "center", marginBottom: 20 }}
+            >
+              Deseja realmente excluir este agendamento?
+            </Text>
+            <View style={styles.buttonAlign}>
+              <Pressable onTouchEnd={() => closeClean()}>
+                <Text style={{ color: "#000000" }}>Cancelar</Text>
+              </Pressable>
+              <Pressable onTouchEnd={() => deleteSchedule()}>
+                <Text style={{ color: "red", fontWeight: "bold" }}>
+                  Excluir
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
       <Modal visible={openModal} transparent={true}>
         <View style={styles.container}>
           <View style={styles.formModalBody}>
@@ -302,6 +348,7 @@ export default function SchedulesScreen() {
         agendaSections={agendaSections}
         multiDots={multiDotData}
         openUpsertModal={openEditModal}
+        openDeleteModal={openDeleteModal}
       ></CustomCalendar>
       <Pressable style={styles.actionButton} onPress={() => openInsertModal()}>
         <Text style={styles.buttonText}>+ Novo agendamento</Text>

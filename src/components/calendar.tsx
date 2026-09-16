@@ -1,10 +1,11 @@
+import { Feather as Icon } from "@react-native-vector-icons/feather/static";
 import { PropsWithChildren } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import {
-    AgendaList,
-    CalendarProvider,
-    ExpandableCalendar,
-    LocaleConfig,
+  AgendaList,
+  CalendarProvider,
+  ExpandableCalendar,
+  LocaleConfig,
 } from "react-native-calendars";
 import { Positions } from "react-native-calendars/src/expandableCalendar";
 
@@ -77,12 +78,14 @@ type ICalendarProps = {
   agendaSections: IAgendaSections[];
   multiDots: IMultiDots;
   openUpsertModal(item: any): void;
+  openDeleteModal(id: number): void;
 } & PropsWithChildren;
 
 export default function CustomCalendar({
   agendaSections,
   multiDots,
   openUpsertModal,
+  openDeleteModal,
 }: ICalendarProps) {
   const today = new Date().toISOString().split("T")[0];
 
@@ -97,17 +100,14 @@ export default function CustomCalendar({
       <AgendaList
         sections={agendaSections}
         renderItem={({ item }) => (
-          <View
-            style={styles.card}
-            onTouchEnd={() => openUpsertModal(item.formData)}
-          >
+          <View style={styles.card}>
             <View>
               <Text style={styles.cardFromTo}>
                 {item.from} - {item.to}
               </Text>
               <Text style={styles.cardText}>{item.name}</Text>
             </View>
-            <View>
+            <View style={{ alignItems: "center", gap: 10 }}>
               <Text
                 style={[
                   styles.cardText,
@@ -116,6 +116,20 @@ export default function CustomCalendar({
               >
                 {item.status.value}
               </Text>
+              <View style={{ display: "flex", flexDirection: "row", gap: 10 }}>
+                <Icon
+                  name="trash"
+                  color="red"
+                  size={30}
+                  onPress={() => openDeleteModal(item.formData.id)}
+                />
+                <Icon
+                  onPress={() => openUpsertModal(item.formData)}
+                  name="edit"
+                  color="orange"
+                  size={30}
+                />
+              </View>
             </View>
           </View>
         )}
