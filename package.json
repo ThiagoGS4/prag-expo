@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "dependencies": {
     "@expo/ui": "~57.0.15",
+    "@react-native-community/datetimepicker": "9.1.0",
     "@react-native-vector-icons/common": "^13.0.3",
     "@react-native-vector-icons/feather": "^13.1.4",
     "axios": "^1.20.0",
@@ -28,6 +29,7 @@
     "react-dom": "19.2.3",
     "react-native": "0.86.3",
     "react-native-calendars": "^1.1314.0",
+    "react-native-element-dropdown": "^2.12.4",
     "react-native-gesture-handler": "~2.32.0",
     "react-native-reanimated": "4.5.1",
     "react-native-safe-area-context": "~5.7.0",

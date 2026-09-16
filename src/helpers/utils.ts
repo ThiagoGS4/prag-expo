@@ -1,4 +1,5 @@
 import { axiosInstance } from "@/services/api";
+import { DateTimePickerChangeEvent } from "@react-native-community/datetimepicker";
 import {
   differenceInDays,
   differenceInSeconds,
@@ -104,4 +105,14 @@ export function getDateStatus(date: string, status: string) {
       }
   }
   return "";
+}
+
+export function timePickerConverter(time: DateTimePickerChangeEvent) {
+  return new Date(time.nativeEvent.timestamp);
+}
+
+export function timePickerConverterPlus(time: DateTimePickerChangeEvent) {
+  return new Date(
+    time.nativeEvent.timestamp + time.nativeEvent.utcOffset * 60 * 1000,
+  );
 }
