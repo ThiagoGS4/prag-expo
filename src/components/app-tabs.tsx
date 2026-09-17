@@ -1,11 +1,21 @@
 import { Colors } from "@/constants/theme";
 import { axiosInstance } from "@/services/api";
-import { router } from "expo-router";
-import { NativeTabs } from "expo-router/unstable-native-tabs";
+import { Feather as Icon } from "@react-native-vector-icons/feather";
+import { router, Tabs } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { StatusError } from "expo-server";
 import { useEffect, useState } from "react";
 import { useColorScheme } from "react-native";
+
+export async function handleLogout() {
+  try {
+    await SecureStore.deleteItemAsync("accessToken");
+    await SecureStore.deleteItemAsync("refreshToken");
+    router.replace("/(auth)/login");
+  } catch (error) {
+    console.error("Erro ao fazer logout:", error);
+  }
+}
 
 export default function AppTabs() {
   const scheme = useColorScheme();
@@ -13,36 +23,12 @@ export default function AppTabs() {
   const [isLogged, setIslogged] = useState(false);
 
   const tabScreens = [
-    {
-      name: "home",
-      label: "Home",
-      icon: require("@/assets/images/tabIcons/home.png"),
-    },
-    {
-      name: "schedules",
-      label: "Schedules",
-      icon: require("@/assets/images/tabIcons/explore.png"),
-    },
-    {
-      name: "customers",
-      label: "Customers",
-      icon: require("@/assets/images/tabIcons/explore.png"),
-    },
-    {
-      name: "properties",
-      label: "Properties",
-      icon: require("@/assets/images/tabIcons/explore.png"),
-    },
-    {
-      name: "audit-log",
-      label: "AuditLog",
-      icon: require("@/assets/images/tabIcons/explore.png"),
-    },
-    {
-      name: "data-options",
-      label: "DataOptions",
-      icon: require("@/assets/images/tabIcons/explore.png"),
-    },
+    { name: "home", label: "Início", icon: "home" },
+    { name: "schedules", label: "Agenda", icon: "calendar" },
+    { name: "customers", label: "Clientes", icon: "users" },
+    { name: "properties", label: "Locais", icon: "map-pin" },
+    { name: "audit-log", label: "Auditoria", icon: "clipboard" },
+    { name: "data-options", label: "Opções", icon: "settings" },
   ];
 
   async function checkLogin() {
@@ -53,10 +39,11 @@ export default function AppTabs() {
         await axiosInstance.get("/me");
         setIslogged(true);
       } catch (error) {
-        SecureStore.deleteItemAsync("accessToken");
-        router.push("/(auth)/login");
+        await handleLogout();
         throw new StatusError(401, "Not logged or token expired");
       }
+    } else {
+      router.replace("/(auth)/login");
     }
   }
 
@@ -64,21 +51,33 @@ export default function AppTabs() {
     checkLogin();
   }, []);
 
+  if (!isLogged) return null;
+
   return (
-    <NativeTabs
-      backgroundColor={colors.background}
-      indicatorColor={colors.backgroundElement}
-      labelStyle={{ selected: { color: colors.text } }}
-      hidden={!isLogged}
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: colors.text,
+        tabBarInactiveTintColor: "gray",
+        tabBarStyle: {
+          backgroundColor: colors.background,
+          borderTopWidth: 1,
+          borderTopColor: "#E0E5EC",
+        },
+      }}
     >
       {tabScreens.map((tab) => (
-        <NativeTabs.Trigger key={tab.name} name={tab.name}>
-          {tab.label && (
-            <NativeTabs.Trigger.Label>{tab.label}</NativeTabs.Trigger.Label>
-          )}
-          <NativeTabs.Trigger.Icon src={tab.icon} renderingMode="template" />
-        </NativeTabs.Trigger>
+        <Tabs.Screen
+          key={tab.name}
+          name={tab.name}
+          options={{
+            title: tab.label,
+            tabBarIcon: ({ color, size }) => (
+              <Icon name={tab.icon} size={size} color={color} />
+            ),
+          }}
+        />
       ))}
-    </NativeTabs>
+    </Tabs>
   );
 }

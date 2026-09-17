@@ -1,3 +1,4 @@
+import { handleLogout } from "@/components/app-tabs";
 import { DataTable } from "@/components/data-table";
 import { FancyButton } from "@/components/ui/fancy-button";
 import { axiosInstance } from "@/services/api";
@@ -220,6 +221,17 @@ export default function DataOptionsScreen() {
           paddingTop: "15%",
         }}
       >
+        <View style={styles.pageHeader}>
+          <Text style={styles.pageTitle}>Opções do Sistema</Text>
+          <FancyButton
+            bgColor="#e53935"
+            padding={8}
+            buttonFunc={handleLogout}
+            icon="log-out"
+          >
+            <Text style={styles.buttonText}>Sair da conta</Text>
+          </FancyButton>
+        </View>
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <FancyButton
@@ -295,6 +307,20 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "flex-end",
     marginBottom: 12,
+  },
+  pageHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 32,
+    borderBottomWidth: 1,
+    borderBottomColor: "#CCCCCC",
+    paddingBottom: 16,
+  },
+  pageTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#333333",
   },
   tableWrapper: {
     minHeight: 200,
