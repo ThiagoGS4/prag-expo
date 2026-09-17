@@ -2,7 +2,15 @@ import { ThemedView } from "@/components/themed-view";
 import { FancyButton } from "@/components/ui/fancy-button";
 import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
 import { extractTokenClaims } from "@/helpers/utils";
+import { axiosInstance } from "@/services/api";
 import { Feather as Icon } from "@react-native-vector-icons/feather";
+import {
+  addDays,
+  isToday,
+  isWithinInterval,
+  parseISO,
+  startOfDay,
+} from "date-fns";
 import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
@@ -19,7 +27,6 @@ export default function HomeScreen() {
   const [username, setUsername] = useState("");
 
   const dataAtual = new Date();
-
   const diaNumero = dataAtual.getDate();
 
   const diaSemanaExtenso = new Intl.DateTimeFormat("pt-BR", {
@@ -31,12 +38,52 @@ export default function HomeScreen() {
   );
 
   useEffect(() => {
-    const extractClaims = () => {
-      return extractTokenClaims(SecureStore.getItem("accessToken"));
-    };
-    setUsername(extractClaims());
-  });
+    const fetchDashboardData = async () => {
+      try {
+        const resp = await axiosInstance.get("/schedules");
+        const schedules = resp.data || [];
 
+        const now = new Date();
+        const startOfToday = startOfDay(now);
+
+        const todaySchedules = schedules.filter((item: any) =>
+          isToday(parseISO(item.scheduled_start)),
+        );
+
+        const completedToday = todaySchedules.filter(
+          (item: any) => !!item.completed_at,
+        );
+
+        const pendingToday = todaySchedules.filter(
+          (item: any) => !item.completed_at,
+        );
+
+        const next7Days = schedules.filter((item: any) => {
+          const start = parseISO(item.scheduled_start);
+          return isWithinInterval(start, {
+            start: startOfToday,
+            end: addDays(now, 7),
+          });
+        });
+
+        setData({
+          today: todaySchedules.length,
+          done: completedToday.length,
+          pendingToday: pendingToday.length,
+          scheduled7Days: next7Days.length,
+        });
+      } catch (error) {
+        console.error("Erro ao buscar dados do painel:", error);
+      }
+    };
+    const extractClaims = () => {
+      const token = SecureStore.getItem("accessToken");
+      return extractTokenClaims(token) || "Usuário";
+    };
+
+    setUsername(extractClaims());
+    fetchDashboardData();
+  }, []);
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
