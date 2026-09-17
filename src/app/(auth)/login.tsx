@@ -83,15 +83,9 @@ export default function HomeScreen() {
         <View style={styles.heroSection}>
           <AnimatedIcon />
           <ThemedText type="title" style={styles.title}>
-            Domus Target aa
+            Domus Target
           </ThemedText>
         </View>
-
-        <ThemedText>teste</ThemedText>
-
-        <ThemedText type="code" style={styles.code}>
-          tesasdadaaa
-        </ThemedText>
 
         <Pressable onTouchEnd={() => setModal(true)} style={styles.button}>
           <Text>Fazer login</Text>

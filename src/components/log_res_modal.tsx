@@ -13,6 +13,7 @@ type Props = {
   openModal: boolean;
   onClose(): void;
   onAction(): void;
+  isRegister?: boolean;
 } & ViewProps;
 
 export function LogResModal({
@@ -20,6 +21,7 @@ export function LogResModal({
   openModal = false,
   onClose,
   onAction: onLogin,
+  isRegister,
   children,
   ...rest
 }: Props) {
@@ -34,7 +36,7 @@ export function LogResModal({
             </Pressable>
 
             <Pressable onTouchEnd={() => onLogin()} style={styles.button}>
-              <Text>Logar</Text>
+              <Text>{isRegister ? "Registrar" : "Logar"}</Text>
             </Pressable>
           </View>
         </View>
