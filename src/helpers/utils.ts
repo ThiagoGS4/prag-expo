@@ -116,3 +116,10 @@ export function timePickerConverterPlus(time: DateTimePickerChangeEvent) {
     time.nativeEvent.timestamp + time.nativeEvent.utcOffset * 60 * 1000,
   );
 }
+
+export function isIsoDateString(value: any): boolean {
+  if (typeof value !== "string") return false;
+  const isoRegex =
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?$/;
+  return isoRegex.test(value);
+}

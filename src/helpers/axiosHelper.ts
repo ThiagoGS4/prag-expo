@@ -11,8 +11,7 @@ type DefaultError = {
   path: string;
   status: number;
   timestamp: string;
-}
-
+};
 
 export function getErrorMessage(error: unknown, fallback: string) {
   const axiosError = error as AxiosError<ApiErrorResponse & DefaultError>;
@@ -24,6 +23,6 @@ export function getErrorMessage(error: unknown, fallback: string) {
     const details = Object.values(data.errors).join(" | ");
     return data.message ? `${data.message}: ${details}` : details;
   }
-  
-  return data.error
+
+  return data.error;
 }

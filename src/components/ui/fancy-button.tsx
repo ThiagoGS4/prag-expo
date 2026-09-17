@@ -7,6 +7,7 @@ type IFancyButton = {
   bgColor?: string;
   fontColor?: string;
   buttonFunc(): void;
+  padding?: number;
 } & PropsWithChildren;
 
 export function FancyButton({
@@ -14,6 +15,7 @@ export function FancyButton({
   bgColor,
   fontColor,
   buttonFunc,
+  padding,
   children,
 }: IFancyButton) {
   const styles = StyleSheet.create({
@@ -25,7 +27,7 @@ export function FancyButton({
       borderRadius: 10,
       borderStyle: "solid",
       borderWidth: 1,
-      padding: 3,
+      padding: padding ?? 3,
       paddingLeft: 6,
       paddingRight: 6,
       backgroundColor: bgColor ? bgColor : "",

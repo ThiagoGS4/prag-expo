@@ -177,10 +177,6 @@ export default function SchedulesScreen() {
     setDeleteModal(true);
   }
 
-  function openInsertModal() {
-    setOpenModal(true);
-  }
-
   function closeClean() {
     setIsEditing(false);
     setOpenModal(false);
@@ -350,7 +346,7 @@ export default function SchedulesScreen() {
         openUpsertModal={openEditModal}
         openDeleteModal={openDeleteModal}
       ></CustomCalendar>
-      <Pressable style={styles.actionButton} onPress={() => openInsertModal()}>
+      <Pressable style={styles.actionButton} onPress={() => setOpenModal(true)}>
         <Text style={styles.buttonText}>+ Novo agendamento</Text>
       </Pressable>
     </View>
