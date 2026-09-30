@@ -5,11 +5,11 @@ import { extractTokenClaims } from "@/helpers/utils"
 import { axiosInstance } from "@/services/api"
 import { Feather as Icon } from "@react-native-vector-icons/feather"
 import {
-  addDays,
-  isToday,
-  isWithinInterval,
-  parseISO,
-  startOfDay,
+    addDays,
+    isToday,
+    isWithinInterval,
+    parseISO,
+    startOfDay,
 } from "date-fns"
 import { router, useFocusEffect } from "expo-router"
 import * as SecureStore from "expo-secure-store"
@@ -91,44 +91,18 @@ export default function HomeScreen() {
         <ThemedView style={styles.container}>
             <SafeAreaView style={styles.safeArea}>
                 <View style={styles.pannel}>
-                    <View>
-                        <Text
-                            style={{
-                                color: "#FFFFFF",
-                                fontSize: 12,
-                                textAlign: "left",
-                            }}
-                        >
-                            PAINEL DE CONTROLE
-                        </Text>
-                        <Text
-                            style={{
-                                color: "#FFFFFF",
-                                fontSize: 16,
-                                textAlign: "left",
-                            }}
-                        >
-                            Olá {username} 👋
-                        </Text>
-                        <Text
-                            style={{
-                                color: "#FFFFFF",
-                                fontSize: 12,
-                                textAlign: "left",
-                            }}
-                        >
-                            {diaSemanaExtenso}, {diaNumero} de {mesExtenso}
-                        </Text>
-                    </View>
-                    <View>
-                        <FancyButton
-                            icon="calendar"
-                            bgColor="#45c057"
-                            fontColor="#FFFFFF"
-                            buttonFunc={() => router.push("/(tabs)/schedules")}
-                        >
-                            Ir para agendamentos
-                        </FancyButton>
+                    <Text style={{ color: "#000000" }}>Domus Target</Text>
+                    <Text style={{ color: "#000000" }}>
+                        {diaSemanaExtenso}, {diaNumero} de {mesExtenso}
+                    </Text>
+                </View>
+                <View>
+                    <Text> Serviços</Text>
+                </View>
+                <View style={styles.cardContainer}>
+                    <View style={styles.statusCard}>
+                        <Text>parei aqui</Text>
+                        {data.pendingToday}
                     </View>
                 </View>
 
@@ -201,6 +175,16 @@ export default function HomeScreen() {
                         </Text>
                     </View>
                 </View>
+                <View>
+                    <FancyButton
+                        icon="calendar"
+                        bgColor="#45c057"
+                        fontColor="#FFFFFF"
+                        buttonFunc={() => router.push("/(tabs)/schedules")}
+                    >
+                        Ir para agendamentos
+                    </FancyButton>
+                </View>
             </SafeAreaView>
         </ThemedView>
     )
@@ -216,7 +200,6 @@ const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
         paddingHorizontal: Spacing.four,
-        alignItems: "center",
         gap: Spacing.three,
         paddingBottom: BottomTabInset + Spacing.three,
         maxWidth: MaxContentWidth,
@@ -234,6 +217,20 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         boxShadow: "0px 4px 10px 2px rgba(0, 0, 0, 0.25)",
     },
+    cardContainer: { alignItems: "center" },
+    statusCard: {
+        width: 366,
+        height: 93,
+        backgroundColor: "#ffffff",
+        borderColor: "rgba(0, 0, 0, 0.30)",
+        borderWidth: 1,
+        borderRadius: 8,
+        shadowColor: "#000000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 2,
+    },
     icon: {
         backgroundColor: "#1aff35",
     },
@@ -241,8 +238,6 @@ const styles = StyleSheet.create({
         display: "flex",
         gap: 20,
         alignItems: "center",
-        experimental_backgroundImage:
-            "linear-gradient(45deg, #1F8A5D, #0E56A0)",
         padding: 26,
         paddingRight: 60,
         paddingLeft: 60,
