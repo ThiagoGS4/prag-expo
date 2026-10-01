@@ -8,6 +8,8 @@ type IFancyButton = {
   fontColor?: string;
   buttonFunc(): void;
   padding?: number;
+  width?: number;
+  height?: number;
 } & PropsWithChildren;
 
 export function FancyButton({
@@ -17,12 +19,15 @@ export function FancyButton({
   buttonFunc,
   padding,
   children,
+  width,
+  height,
 }: IFancyButton) {
   const styles = StyleSheet.create({
     button: {
       display: "flex",
       flexDirection: "row",
       alignItems: "center",
+      justifyContent: "center",
       gap: 5,
       borderRadius: 10,
       borderStyle: "solid",
@@ -32,6 +37,8 @@ export function FancyButton({
       paddingRight: 6,
       backgroundColor: bgColor ? bgColor : "",
       borderColor: fontColor ? fontColor : "",
+      width: width ? width : "auto",
+      height: height ? height : "auto",
     },
   });
 
