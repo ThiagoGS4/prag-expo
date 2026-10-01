@@ -2,16 +2,16 @@ import DivisorBar from "@/components/divisor-bar";
 import { ThemedView } from "@/components/themed-view";
 import { FancyButton } from "@/components/ui/fancy-button";
 import VerticalDivisor from "@/components/vertical-divisor";
-import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
-import { extractTokenClaims } from "@/helpers/utils";
+import { MaxContentWidth, Spacing } from "@/constants/theme";
+import { extractTokenClaims, parseHours } from "@/helpers/utils";
 import { axiosInstance } from "@/services/api";
 import { Feather as Icon } from "@react-native-vector-icons/feather";
 import {
-    addDays,
-    isToday,
-    isWithinInterval,
-    parseISO,
-    startOfDay,
+  addDays,
+  isToday,
+  isWithinInterval,
+  parseISO,
+  startOfDay,
 } from "date-fns";
 import { router, useFocusEffect } from "expo-router";
 import * as SecureStore from "expo-secure-store";
@@ -20,12 +20,26 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
-  const [data, setData] = useState({
-    today: 0,
-    done: 0,
-    pendingToday: 0,
-    scheduled7Days: 0,
-  });
+  const [data, setData] = useState<{
+    today: number;
+    done: number;
+    pendingToday: number;
+    scheduled7Days: number;
+    scheduledWeek: {
+      scheduleStart: string;
+      scheduleEnd: string;
+      name: string;
+      index: number;
+    }[];
+  }>();
+  const [pageWeekData, setPageWeekData] = useState<
+    {
+      scheduleStart: string;
+      scheduleEnd: string;
+      name: string;
+      index: number;
+    }[]
+  >([]);
   const [username, setUsername] = useState("");
 
   const dataAtual = new Date();
@@ -43,7 +57,9 @@ export default function HomeScreen() {
     useCallback(() => {
       const fetchDashboardData = async () => {
         try {
-          const resp = await axiosInstance.get("/schedules");
+          const resp = await axiosInstance.get(
+            `/scheduledWeek/${new Date().toISOString()}`,
+          );
           const schedules = resp.data || [];
 
           const now = new Date();
@@ -69,16 +85,30 @@ export default function HomeScreen() {
             });
           });
 
+          const week = schedules.map((item: any, index: number) => {
+            return {
+              index,
+              scheduleStart: item.scheduled_start,
+              scheduleEnd: item.scheduled_end,
+              name: item.properties.name,
+            };
+          });
+
           setData({
             today: todaySchedules.length,
             done: completedToday.length,
             pendingToday: pendingToday.length,
             scheduled7Days: next7Days.length,
+            scheduledWeek: week,
           });
+
+          const pagedWeek = week ? week.slice(0, 3) : [];
+          setPageWeekData(pagedWeek);
         } catch (error) {
           console.error("Erro ao buscar dados do painel:", error);
         }
       };
+
       const extractClaims = () => {
         const token = SecureStore.getItem("accessToken");
         return extractTokenClaims(token) || "Usuário";
@@ -88,6 +118,50 @@ export default function HomeScreen() {
       fetchDashboardData();
     }, []),
   );
+
+  // isso deixa os botões enabled ou disabled
+  const allSchedules = data?.scheduledWeek || [];
+  const firstItemIndex = pageWeekData[0]?.index ?? 0;
+  const lastItemIndex = pageWeekData[pageWeekData.length - 1]?.index ?? -1;
+
+  const isPrevDisabled = pageWeekData.length === 0 || firstItemIndex === 0;
+  const isNextDisabled =
+    allSchedules.length === 0 || lastItemIndex >= allSchedules.length - 1;
+
+  // lidando com botão próximo
+  function nextBtn() {
+    const weekData = pageWeekData ?? [];
+    if (weekData.length === 0) {
+      return;
+    }
+    const lastItem = weekData?.[weekData.length - 1];
+    const nextIndex = (lastItem?.index ?? -1) + 1;
+
+    const nextPartial = data
+      ? data.scheduledWeek.slice(nextIndex, nextIndex + 3)
+      : [];
+
+    setPageWeekData(nextPartial);
+  }
+  // lidando com botão anterior
+  function prevBtn() {
+    const weekData = pageWeekData;
+    if (weekData.length === 0) {
+      return;
+    }
+    const firstItem = weekData?.[0];
+    const firstItemIndex = firstItem?.index ?? 0;
+
+    let prevIndex = firstItemIndex - 3;
+
+    if (prevIndex < 0) prevIndex = 0;
+
+    const prevPartial = data
+      ? data.scheduledWeek.slice(prevIndex, prevIndex + 3)
+      : [];
+
+    setPageWeekData(prevPartial);
+  }
 
   return (
     <ThemedView style={styles.container}>
@@ -109,19 +183,19 @@ export default function HomeScreen() {
             <View style={styles.statusCard}>
               <View style={{ justifyContent: "center", alignItems: "center" }}>
                 <Text style={[styles.numbers, { color: "#ffd400" }]}>
-                  {data.pendingToday}
+                  {data?.pendingToday}
                 </Text>
                 <Text>Pend.</Text>
               </View>
               <View style={{ justifyContent: "center", alignItems: "center" }}>
                 <Text style={[styles.numbers, { color: "#7fc8a9" }]}>
-                  {data.done}
+                  {data?.done}
                 </Text>
                 <Text>Concluídos</Text>
               </View>
               <View style={{ justifyContent: "center", alignItems: "center" }}>
                 <Text style={[styles.numbers, { color: "#1a5093" }]}>
-                  {data.today}
+                  {data?.today}
                 </Text>
                 <Text>Hoje</Text>
               </View>
@@ -140,70 +214,47 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.fastAccess}>
-            {/* parei aqui, fazer paginação */}
-            <View style={styles.infoCard}>
-              <View
-                style={{
-                  backgroundColor: "#ffd051",
-                  padding: 4,
-                  borderRadius: 12,
-                  marginRight: 8,
-                }}
-              >
-                <Icon name="clock" size={32} color="black"></Icon>
-              </View>
+            {pageWeekData?.map((item, index) => (
+              <View style={styles.infoCard} key={index}>
+                <View
+                  style={{
+                    padding: 4,
+                    borderRadius: 12,
+                    marginRight: 8,
+                  }}
+                >
+                  <Icon name="clock" size={32} color="black"></Icon>
+                </View>
 
-              <Text>a - b</Text>
-              <VerticalDivisor label="" height={20}></VerticalDivisor>
-              <Text>a - b</Text>
-            </View>
-
-            <View style={styles.infoCard}>
-              <View
-                style={{
-                  backgroundColor: "#14a324",
-                  padding: 4,
-                  borderRadius: 12,
-                  marginRight: 8,
-                }}
-              >
-                <Icon name="check-circle" size={32} color="black"></Icon>
+                <Text style={styles.cardText}>
+                  {`${parseHours(item.scheduleStart)}`} -{" "}
+                  {`${parseHours(item.scheduleEnd)}`}
+                </Text>
+                <VerticalDivisor label="" height={20}></VerticalDivisor>
+                <Text style={styles.cardText}>{item.name}</Text>
               </View>
-              <Text>Serviços finalizados hoje: {data.done}</Text>
-            </View>
-
-            <View style={styles.infoCard}>
-              <View
-                style={{
-                  backgroundColor: "#fdbe41",
-                  padding: 4,
-                  borderRadius: 12,
-                  marginRight: 8,
-                }}
-              >
-                <Icon name="clock" size={32} color="black"></Icon>
-              </View>
-              <Text>Serviços pendentes para hoje: {data.pendingToday}</Text>
-            </View>
-
-            <View style={styles.infoCard}>
-              <View
-                style={{
-                  backgroundColor: "#177add",
-                  padding: 4,
-                  borderRadius: 12,
-                  marginRight: 8,
-                }}
-              >
-                <Icon name="calendar" size={32} color="black"></Icon>
-              </View>
-              <Text>Agendamentos (próx 7 dias): {data.scheduled7Days}</Text>
-            </View>
+            ))}
           </View>
+          <View style={styles.pageButtons}>
+            <FancyButton
+              disabled={isPrevDisabled}
+              buttonFunc={() => prevBtn()}
+              icon="arrow-left"
+              width={70}
+            />
+            <FancyButton
+              disabled={isNextDisabled}
+              buttonFunc={() => nextBtn()}
+              icon="arrow-right"
+              width={70}
+            />
+          </View>
+
+          {/* atalho para ir para agendamentos */}
           <View style={{ alignItems: "center" }}>
             <FancyButton
               icon="calendar"
-              bgColor="#45c057"
+              bgColor="#1f6f5b"
               fontColor="#FFFFFF"
               width={320}
               height={50}
@@ -227,7 +278,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three + 20,
+    paddingBottom: Spacing.four,
   },
   safeArea: {
     flex: 1,
@@ -239,6 +290,7 @@ const styles = StyleSheet.create({
     display: "flex",
     gap: 16,
     paddingHorizontal: Spacing.four,
+    minHeight: 220,
   },
   subsections: {
     fontFamily: "Inter",
@@ -277,6 +329,19 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 2,
+  },
+  cardText: {
+    fontFamily: "Inter",
+    fontWeight: "700",
+    fontSize: 15,
+    color: "#000000",
+  },
+  pageButtons: {
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: Spacing.two,
+    paddingHorizontal: Spacing.four,
   },
   icon: {
     backgroundColor: "#1aff35",

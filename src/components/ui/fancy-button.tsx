@@ -10,6 +10,7 @@ type IFancyButton = {
   padding?: number;
   width?: number;
   height?: number;
+  disabled?: boolean;
 } & PropsWithChildren;
 
 export function FancyButton({
@@ -21,6 +22,7 @@ export function FancyButton({
   children,
   width,
   height,
+  disabled,
 }: IFancyButton) {
   const styles = StyleSheet.create({
     button: {
@@ -43,7 +45,11 @@ export function FancyButton({
   });
 
   return (
-    <Pressable onTouchEnd={() => buttonFunc()} style={styles.button}>
+    <Pressable
+      onPress={() => buttonFunc()}
+      style={[styles.button, disabled && { opacity: 0.5 }]}
+      disabled={disabled}
+    >
       {icon && (
         <Icon
           name={icon as any}

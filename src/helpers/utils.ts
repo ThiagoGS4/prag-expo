@@ -53,6 +53,11 @@ export function parseDate(dataIso: string) {
   return formatedDate;
 }
 
+export function parseHours(dataIso: string) {
+  const formatedDate = format(parseISO(dataIso), "HH:mm");
+  return formatedDate;
+}
+
 export function getRandomHexColor() {
   const letters = "0123456789ABCDEF";
   let color = "#";
