@@ -3,11 +3,13 @@ import { ThemedView } from "@/components/themed-view";
 import { FancyButton } from "@/components/ui/fancy-button";
 import VerticalDivisor from "@/components/vertical-divisor";
 import { MaxContentWidth, Spacing } from "@/constants/theme";
-import { extractTokenClaims, parseHours } from "@/helpers/utils";
+import { extractTokenClaims, parseDate } from "@/helpers/utils";
 import { axiosInstance } from "@/services/api";
-import { Feather as Icon } from "@react-native-vector-icons/feather";
+import { Feather as Icon } from "@react-native-vector-icons/feather/static";
 import {
   addDays,
+  addHours,
+  format,
   isToday,
   isWithinInterval,
   parseISO,
@@ -15,8 +17,8 @@ import {
 } from "date-fns";
 import { router, useFocusEffect } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import { useCallback, useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useCallback, useMemo, useState } from "react";
+import { ScrollView, SectionList, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
@@ -163,6 +165,47 @@ export default function HomeScreen() {
     setPageWeekData(prevPartial);
   }
 
+  const agendaSections = useMemo(() => {
+    if (!pageWeekData || pageWeekData.length === 0) return [];
+
+    const grouped: Record<string, any[]> = {};
+
+    pageWeekData.forEach((item) => {
+      const formattedDate = parseDate(item.scheduleStart);
+
+      if (!grouped[formattedDate]) {
+        grouped[formattedDate] = [];
+      }
+
+      grouped[formattedDate].push({
+        name: item.name,
+
+        from: format(addHours(item.scheduleStart, 3), "HH:mm"),
+
+        to: format(addHours(item.scheduleEnd, 3), "HH:mm"),
+
+        formData: item,
+      });
+    });
+
+    const formatedToSections = Object.keys(grouped).map((dateKey) => ({
+      title: dateKey,
+      day: new Date(dateKey).toLocaleDateString("pt-BR", {
+        day: "2-digit",
+      }),
+      month: new Date(dateKey)
+        .toLocaleDateString("pt-BR", {
+          month: "long",
+        })
+        .slice(0, 3),
+      data: grouped[dateKey],
+    }));
+
+    console.log(formatedToSections[0]);
+
+    return formatedToSections;
+  }, [pageWeekData]);
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={["top"]}>
@@ -208,32 +251,43 @@ export default function HomeScreen() {
               Agendamentos próximos (7 dias)
             </Text>
           </View>
-
-          <View style={{ paddingHorizontal: Spacing.three }}>
-            <DivisorBar label={`${diaNumero} de ${mesExtenso.slice(0, 3)}`} />
-          </View>
-
           <View style={styles.fastAccess}>
-            {pageWeekData?.map((item, index) => (
-              <View style={styles.infoCard} key={index}>
-                <View
-                  style={{
-                    padding: 4,
-                    borderRadius: 12,
-                    marginRight: 8,
-                  }}
-                >
-                  <Icon name="clock" size={32} color="black"></Icon>
-                </View>
+            <SectionList
+              scrollEnabled={false}
+              sections={agendaSections}
+              keyExtractor={(item, index) => item.name + index}
+              renderItem={({ item }) => (
+                <View style={styles.infoCard}>
+                  <View
+                    style={{
+                      padding: 4,
+                      borderRadius: 12,
+                      marginRight: 8,
+                    }}
+                  >
+                    <Icon name="clock" size={32} color="black"></Icon>
+                  </View>
 
-                <Text style={styles.cardText}>
-                  {`${parseHours(item.scheduleStart)}`} -{" "}
-                  {`${parseHours(item.scheduleEnd)}`}
-                </Text>
-                <VerticalDivisor label="" height={20}></VerticalDivisor>
-                <Text style={styles.cardText}>{item.name}</Text>
-              </View>
-            ))}
+                  <Text style={styles.cardText}>
+                    {item.from} - {item.to}
+                  </Text>
+                  <VerticalDivisor label="" height={20}></VerticalDivisor>
+                  <Text style={styles.cardText}>{item.name}</Text>
+                </View>
+              )}
+              renderSectionHeader={({ section }) => {
+                return (
+                  <View
+                    style={{
+                      paddingHorizontal: Spacing.three,
+                      paddingTop: Spacing.three,
+                    }}
+                  >
+                    <DivisorBar label={section.day + " de " + section.month} />
+                  </View>
+                );
+              }}
+            />
           </View>
           <View style={styles.pageButtons}>
             <FancyButton
@@ -287,10 +341,8 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   fastAccess: {
-    display: "flex",
     gap: 16,
-    paddingHorizontal: Spacing.four,
-    minHeight: 220,
+    minHeight: 260,
   },
   subsections: {
     fontFamily: "Inter",
@@ -300,12 +352,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.two,
   },
   infoCard: {
+    marginHorizontal: Spacing.four,
     backgroundColor: "#FFFFFF",
     padding: 10,
     display: "flex",
     flexDirection: "row",
     alignItems: "center",
     borderRadius: 12,
+    marginVertical: 6,
     boxShadow: "0px 4px 10px 2px rgba(0, 0, 0, 0.25)",
   },
   cardContainer: { alignItems: "center" },
