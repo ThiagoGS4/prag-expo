@@ -1,15 +1,11 @@
-import DivisorBar from "@/components/divisor-bar";
+import SchedulesCards from "@/components/schedules-cards";
 import { ThemedView } from "@/components/themed-view";
 import { FancyButton } from "@/components/ui/fancy-button";
-import VerticalDivisor from "@/components/vertical-divisor";
 import { MaxContentWidth, Spacing } from "@/constants/theme";
-import { extractTokenClaims, parseDate } from "@/helpers/utils";
+import { extractTokenClaims } from "@/helpers/utils";
 import { axiosInstance } from "@/services/api";
-import { Feather as Icon } from "@react-native-vector-icons/feather/static";
 import {
   addDays,
-  addHours,
-  format,
   isToday,
   isWithinInterval,
   parseISO,
@@ -17,9 +13,30 @@ import {
 } from "date-fns";
 import { router, useFocusEffect } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import { useCallback, useMemo, useState } from "react";
-import { ScrollView, SectionList, StyleSheet, Text, View } from "react-native";
+import { useCallback, useState } from "react";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+interface IAgendaSections {
+  data: IData[];
+  day: string;
+  month: string;
+  title: string;
+}
+
+interface IData {
+  formData: IFormData;
+  from: string;
+  name: string;
+  to: string;
+}
+
+interface IFormData {
+  index: number;
+  name: string;
+  scheduleEnd: string;
+  scheduleStart: string;
+}
 
 export default function HomeScreen() {
   const [data, setData] = useState<{
@@ -34,14 +51,6 @@ export default function HomeScreen() {
       index: number;
     }[];
   }>();
-  const [pageWeekData, setPageWeekData] = useState<
-    {
-      scheduleStart: string;
-      scheduleEnd: string;
-      name: string;
-      index: number;
-    }[]
-  >([]);
   const [username, setUsername] = useState("");
 
   const dataAtual = new Date();
@@ -103,9 +112,6 @@ export default function HomeScreen() {
             scheduled7Days: next7Days.length,
             scheduledWeek: week,
           });
-
-          const pagedWeek = week ? week.slice(0, 3) : [];
-          setPageWeekData(pagedWeek);
         } catch (error) {
           console.error("Erro ao buscar dados do painel:", error);
         }
@@ -120,91 +126,6 @@ export default function HomeScreen() {
       fetchDashboardData();
     }, []),
   );
-
-  // isso deixa os botões enabled ou disabled
-  const allSchedules = data?.scheduledWeek || [];
-  const firstItemIndex = pageWeekData[0]?.index ?? 0;
-  const lastItemIndex = pageWeekData[pageWeekData.length - 1]?.index ?? -1;
-
-  const isPrevDisabled = pageWeekData.length === 0 || firstItemIndex === 0;
-  const isNextDisabled =
-    allSchedules.length === 0 || lastItemIndex >= allSchedules.length - 1;
-
-  // lidando com botão próximo
-  function nextBtn() {
-    const weekData = pageWeekData ?? [];
-    if (weekData.length === 0) {
-      return;
-    }
-    const lastItem = weekData?.[weekData.length - 1];
-    const nextIndex = (lastItem?.index ?? -1) + 1;
-
-    const nextPartial = data
-      ? data.scheduledWeek.slice(nextIndex, nextIndex + 3)
-      : [];
-
-    setPageWeekData(nextPartial);
-  }
-  // lidando com botão anterior
-  function prevBtn() {
-    const weekData = pageWeekData;
-    if (weekData.length === 0) {
-      return;
-    }
-    const firstItem = weekData?.[0];
-    const firstItemIndex = firstItem?.index ?? 0;
-
-    let prevIndex = firstItemIndex - 3;
-
-    if (prevIndex < 0) prevIndex = 0;
-
-    const prevPartial = data
-      ? data.scheduledWeek.slice(prevIndex, prevIndex + 3)
-      : [];
-
-    setPageWeekData(prevPartial);
-  }
-
-  const agendaSections = useMemo(() => {
-    if (!pageWeekData || pageWeekData.length === 0) return [];
-
-    const grouped: Record<string, any[]> = {};
-
-    pageWeekData.forEach((item) => {
-      const formattedDate = parseDate(item.scheduleStart);
-
-      if (!grouped[formattedDate]) {
-        grouped[formattedDate] = [];
-      }
-
-      grouped[formattedDate].push({
-        name: item.name,
-
-        from: format(addHours(item.scheduleStart, 3), "HH:mm"),
-
-        to: format(addHours(item.scheduleEnd, 3), "HH:mm"),
-
-        formData: item,
-      });
-    });
-
-    const formatedToSections = Object.keys(grouped).map((dateKey) => ({
-      title: dateKey,
-      day: new Date(dateKey).toLocaleDateString("pt-BR", {
-        day: "2-digit",
-      }),
-      month: new Date(dateKey)
-        .toLocaleDateString("pt-BR", {
-          month: "long",
-        })
-        .slice(0, 3),
-      data: grouped[dateKey],
-    }));
-
-    console.log(formatedToSections[0]);
-
-    return formatedToSections;
-  }, [pageWeekData]);
 
   return (
     <ThemedView style={styles.container}>
@@ -251,60 +172,8 @@ export default function HomeScreen() {
               Agendamentos próximos (7 dias)
             </Text>
           </View>
-          <View style={styles.fastAccess}>
-            <SectionList
-              scrollEnabled={false}
-              sections={agendaSections}
-              keyExtractor={(item, index) => item.name + index}
-              renderItem={({ item }) => (
-                <View style={styles.infoCard}>
-                  <View
-                    style={{
-                      padding: 4,
-                      borderRadius: 12,
-                      marginRight: 8,
-                    }}
-                  >
-                    <Icon name="clock" size={32} color="black"></Icon>
-                  </View>
 
-                  <Text style={styles.cardText}>
-                    {item.from} - {item.to}
-                  </Text>
-                  <VerticalDivisor label="" height={20}></VerticalDivisor>
-                  <Text style={styles.cardText}>{item.name}</Text>
-                </View>
-              )}
-              renderSectionHeader={({ section }) => {
-                return (
-                  <View
-                    style={{
-                      paddingHorizontal: Spacing.three,
-                      paddingTop: Spacing.three,
-                    }}
-                  >
-                    <DivisorBar label={section.day + " de " + section.month} />
-                  </View>
-                );
-              }}
-            />
-          </View>
-          <View style={styles.pageButtons}>
-            <FancyButton
-              disabled={isPrevDisabled}
-              buttonFunc={() => prevBtn()}
-              icon="arrow-left"
-              width={70}
-            />
-            <FancyButton
-              disabled={isNextDisabled}
-              buttonFunc={() => nextBtn()}
-              icon="arrow-right"
-              width={70}
-            />
-          </View>
-
-          {/* atalho para ir para agendamentos */}
+          <SchedulesCards fullData={data?.scheduledWeek ?? []}></SchedulesCards>
           <View style={{ alignItems: "center" }}>
             <FancyButton
               icon="calendar"
