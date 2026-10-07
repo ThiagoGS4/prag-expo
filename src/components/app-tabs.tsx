@@ -78,6 +78,13 @@ export default function AppTabs() {
           }}
         />
       ))}
+
+      <Tabs.Screen
+        name="schedules-day-cards"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }

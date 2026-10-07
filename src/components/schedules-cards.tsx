@@ -11,6 +11,9 @@ import VerticalDivisor from "./vertical-divisor";
 type ISchedulesCards = {
   fullData: IData[];
   cardsPerPage?: number;
+  fullCrud?: boolean;
+  openDeleteModal?(id: number): void;
+  openUpsertModal?(formData: ISchedule): void;
 };
 
 interface IAgendaSections {
@@ -25,6 +28,9 @@ interface ISectionData {
   from: string;
   name: string;
   to: string;
+  status?: string;
+  id?: number;
+  fullScheduleData?: ISchedule;
 }
 
 interface IData {
@@ -32,11 +38,37 @@ interface IData {
   name: string;
   scheduleEnd: string;
   scheduleStart: string;
+  status?: string;
+  id?: number;
+  fullScheduleData?: ISchedule;
+}
+
+interface ISchedule {
+  id: number;
+  scheduled_start: string;
+  scheduled_end: string;
+  completed_at: Date;
+  notes: string;
+  created_at: string;
+  updated_at: string;
+  properties: SubStuff;
+  plagues: SubStuff;
+  service: SubStuff;
+  status: SubStuff;
+  user: SubStuff;
+}
+
+interface SubStuff {
+  id: number;
+  name: string;
 }
 
 export default function SchedulesCards({
   fullData,
   cardsPerPage = 3,
+  fullCrud = false,
+  openDeleteModal,
+  openUpsertModal,
 }: ISchedulesCards) {
   const [startIndex, setStartIndex] = useState(0);
 
@@ -85,6 +117,9 @@ export default function SchedulesCards({
         from: format(addHours(item.scheduleStart, 3), "HH:mm"),
         to: format(addHours(item.scheduleEnd, 3), "HH:mm"),
         formData: item,
+        status: item.status,
+        id: item.id,
+        fullScheduleData: item.fullScheduleData,
       });
     });
 
@@ -126,7 +161,44 @@ export default function SchedulesCards({
                 {item.from} - {item.to}
               </Text>
               <VerticalDivisor label="" height={20}></VerticalDivisor>
-              <Text style={styles.cardText}>{item.name}</Text>
+              <View>
+                <Text style={styles.cardText}>{item.name}</Text>
+                {fullCrud && (
+                  <Text style={styles.cardStatus}>{item.status}</Text>
+                )}
+              </View>
+              {fullCrud && (
+                <View
+                  style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    gap: 10,
+                    marginLeft: "3%",
+                  }}
+                >
+                  <Icon
+                    name="trash"
+                    color="red"
+                    size={26}
+                    onPress={() => {
+                      console.log("item.formData.id! --> ", item.formData.id);
+                      openDeleteModal!(item.formData.id!);
+                    }}
+                  />
+                  <Icon
+                    onPress={() => {
+                      console.log(
+                        "item.fullScheduleData --> ",
+                        item.fullScheduleData,
+                      );
+                      openUpsertModal!(item.fullScheduleData!);
+                    }}
+                    name="edit"
+                    color="orange"
+                    size={26}
+                  />
+                </View>
+              )}
             </View>
           )}
           renderSectionHeader={({ section }) => {
@@ -170,6 +242,7 @@ const styles = StyleSheet.create({
     marginHorizontal: Spacing.four,
     backgroundColor: "#FFFFFF",
     padding: 10,
+    gap: 4,
     display: "flex",
     flexDirection: "row",
     alignItems: "center",
@@ -181,6 +254,12 @@ const styles = StyleSheet.create({
     fontFamily: "Inter",
     fontWeight: "700",
     fontSize: 15,
+    color: "#000000",
+  },
+  cardStatus: {
+    fontFamily: "Inter",
+    fontWeight: "700",
+    fontSize: 12,
     color: "#000000",
   },
   pageButtons: {

@@ -1,13 +1,14 @@
 import { Feather as Icon } from "@react-native-vector-icons/feather/static";
+import { router } from "expo-router";
 import { PropsWithChildren } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import {
   AgendaList,
+  Calendar,
   CalendarProvider,
-  ExpandableCalendar,
+  DateData,
   LocaleConfig,
 } from "react-native-calendars";
-import { Positions } from "react-native-calendars/src/expandableCalendar";
 
 LocaleConfig.locales["pt-br"] = {
   monthNames: [
@@ -89,12 +90,23 @@ export default function CustomCalendar({
 }: ICalendarProps) {
   const today = new Date().toISOString().split("T")[0];
 
+  function filterData(dayClicked: DateData) {
+    return Object.values(agendaSections).filter((item: any) => {
+      return item.title === dayClicked.dateString;
+    });
+  }
+
   return (
     <CalendarProvider date={today}>
-      <ExpandableCalendar
-        initialPosition={Positions.OPEN}
+      <Calendar
         markingType="multi-dot"
         markedDates={multiDots}
+        onDayPress={(date: DateData) =>
+          router.push({
+            params: { dayData: JSON.stringify(filterData(date)) },
+            pathname: "/(tabs)/schedules-day-cards",
+          })
+        }
       />
 
       <AgendaList

@@ -173,7 +173,7 @@ export default function HomeScreen() {
             </Text>
           </View>
 
-          <SchedulesCards fullData={data?.scheduledWeek ?? []}></SchedulesCards>
+          <SchedulesCards fullData={data?.scheduledWeek ?? []} />
           <View style={{ alignItems: "center" }}>
             <FancyButton
               icon="calendar"
