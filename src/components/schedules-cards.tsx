@@ -161,19 +161,37 @@ export default function SchedulesCards({
                 {item.from} - {item.to}
               </Text>
               <VerticalDivisor label="" height={20}></VerticalDivisor>
-              <View>
-                <Text style={styles.cardText}>{item.name}</Text>
+              <View
+                style={{
+                  flex: 1,
+                  overflow: "hidden",
+                  paddingHorizontal: 8,
+                }}
+              >
+                <Text
+                  style={styles.cardText}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {item.name}
+                </Text>
                 {fullCrud && (
-                  <Text style={styles.cardStatus}>{item.status}</Text>
+                  <Text
+                    style={styles.cardStatus}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    {item.status}
+                  </Text>
                 )}
               </View>
+
               {fullCrud && (
                 <View
                   style={{
-                    display: "flex",
                     flexDirection: "row",
-                    gap: 10,
-                    marginLeft: "3%",
+                    gap: 12,
+                    marginRight: "2%",
                   }}
                 >
                   <Icon
@@ -242,7 +260,6 @@ const styles = StyleSheet.create({
     marginHorizontal: Spacing.four,
     backgroundColor: "#FFFFFF",
     padding: 10,
-    gap: 4,
     display: "flex",
     flexDirection: "row",
     alignItems: "center",

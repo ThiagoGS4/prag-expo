@@ -45,12 +45,10 @@ interface Properties {
 }
 
 export default function schedulesDayCards() {
-  const { dayData } = useLocalSearchParams();
+  const { selectedDate } = useLocalSearchParams();
   const [isEditing, setIsEditing] = useState(false);
   const [mainForm, setMainForm] = useState<IFormData>();
   const [allDaySchedules, setAllDaySchedules] = useState<IFormData[]>();
-  const data = dayData ? JSON.parse(dayData as string) : [];
-  const currentDate = dayData ? JSON.parse(dayData as string)[0] : [];
   const [openModal, setOpenModal] = useState(false);
   const [deleteId, setDeleteId] = useState<number>();
   const [deleteModal, setDeleteModal] = useState(false);
@@ -123,7 +121,7 @@ export default function schedulesDayCards() {
   useFocusEffect(
     useCallback(() => {
       const fetchDashboardData = async () => {
-        const isoDateString = `${currentDate.title}T00:00:00.000Z`;
+        const isoDateString = `${selectedDate}T00:00:00.000Z`;
 
         try {
           const resp = await axiosInstance.get(
@@ -139,10 +137,10 @@ export default function schedulesDayCards() {
         }
       };
       fetchDashboardData();
-    }, [currentDate?.title]),
+    }, [selectedDate]),
   );
 
-  const date = parse(currentDate.title, "yyyy-MM-dd", new Date());
+  const date = parse(selectedDate as string, "yyyy-MM-dd", new Date());
 
   const day = format(date, "dd");
 
@@ -178,7 +176,7 @@ export default function schedulesDayCards() {
     try {
       await axiosInstance.delete(`/schedules/${deleteId}`);
       try {
-        const isoDateString = `${currentDate.title}T00:00:00.000Z`;
+        const isoDateString = `${selectedDate}T00:00:00.000Z`;
         const resp = await axiosInstance.get(`/scheduledDay/${isoDateString}`);
         setAllDaySchedules(resp.data);
         closeClean();
@@ -203,11 +201,12 @@ export default function schedulesDayCards() {
       try {
         await axiosInstance.put("/alterarSchedules", mainForm);
         try {
-          const isoDateString = `${currentDate.title}T00:00:00.000Z`;
+          const isoDateString = `${selectedDate}T00:00:00.000Z`;
           const resp = await axiosInstance.get(
             `/scheduledDay/${isoDateString}`,
           );
           setAllDaySchedules(resp.data);
+          closeClean();
           setOpenModal(false);
         } catch (error) {
           console.error("Erro ao buscar agendamentos:", error);
@@ -219,11 +218,12 @@ export default function schedulesDayCards() {
       try {
         await axiosInstance.post("/inserirSchedules", mainForm);
         try {
-          const isoDateString = `${currentDate.title}T00:00:00.000Z`;
+          const isoDateString = `${selectedDate}T00:00:00.000Z`;
           const resp = await axiosInstance.get(
             `/scheduledDay/${isoDateString}`,
           );
           setAllDaySchedules(resp.data);
+          closeClean();
           setOpenModal(false);
         } catch (error) {
           console.error("Erro ao buscar agendamentos:", error);
@@ -238,7 +238,7 @@ export default function schedulesDayCards() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={["top"]}>
         <Modal visible={deleteModal} transparent={true}>
-          <View style={styles.container}>
+          <View style={styles.modalOverlay}>
             <View style={styles.formModalBody}>
               <Text
                 style={{
@@ -263,10 +263,11 @@ export default function schedulesDayCards() {
           </View>
         </Modal>
         <Modal visible={openModal} transparent={true}>
-          <View style={styles.container}>
+          <View style={styles.modalOverlay}>
             <View style={styles.formModalBody}>
               <DateTimePicker
                 placeholder="Dia/Horário de início"
+                preSelectedDay={new Date(`${selectedDate}T00:00:00.000Z`)}
                 value={mainForm?.scheduled_start}
                 setDateTimeValue={(value) => {
                   setMainForm((prev) => ({
@@ -385,21 +386,43 @@ export default function schedulesDayCards() {
           openUpsertModal={openEditModal}
           openDeleteModal={openDeleteModal}
         />
-        {/* todo: adicionar botões... */}
+        <View style={{ alignItems: "center" }}>
+          <FancyButton
+            icon="plus"
+            bgColor="#1f6f5b"
+            fontColor="#FFFFFF"
+            width={320}
+            height={50}
+            buttonFunc={() => setOpenModal(true)}
+          >
+            Novo agendamento
+          </FancyButton>
+        </View>
       </SafeAreaView>
     </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
   formModalBody: {
+    width: "90%",
     borderRadius: 20,
     backgroundColor: "#FFFFFF",
     padding: 20,
-    margin: "15%",
     display: "flex",
     flexDirection: "column",
     gap: 10,
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
   container: {
     flex: 1,

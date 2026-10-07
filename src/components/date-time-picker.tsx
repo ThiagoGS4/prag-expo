@@ -1,7 +1,4 @@
-import { timePickerConverter } from "@/helpers/utils";
-import RNDateTimePicker, {
-  DateTimePickerChangeEvent,
-} from "@react-native-community/datetimepicker";
+import RNDateTimePicker from "@react-native-community/datetimepicker";
 import { Feather as Icon } from "@react-native-vector-icons/feather/static";
 import { addHours, lightFormat } from "date-fns";
 import { PropsWithChildren, useState } from "react";
@@ -11,6 +8,7 @@ type IDateTimePicker = {
   placeholder: string;
   value?: Date;
   editing?: boolean;
+  preSelectedDay?: Date;
   previousValue?: Date;
   disabled?: boolean;
   setDateTimeValue: (date: Date | undefined) => void;
@@ -20,6 +18,7 @@ export function DateTimePicker({
   placeholder,
   value,
   editing = false,
+  preSelectedDay,
   previousValue,
   disabled = false,
   setDateTimeValue,
@@ -42,6 +41,12 @@ export function DateTimePicker({
     }
   }
 
+  const initialDate = value
+    ? addHours(value, 3)
+    : preSelectedDay
+      ? preSelectedDay
+      : new Date();
+
   return (
     <View>
       {showDayPicker && (
@@ -50,11 +55,13 @@ export function DateTimePicker({
           design="material"
           mode="date"
           onDismiss={handleDismiss}
-          value={value ? addHours(value, 3) : new Date()}
-          onValueChange={(date: DateTimePickerChangeEvent) => {
-            setDateReturn(timePickerConverter(date));
-            setShowDayPicker(false);
-            setShowTimePicker(true);
+          value={initialDate}
+          onValueChange={(_, date) => {
+            if (date) {
+              setDateReturn(date);
+              setShowDayPicker(false);
+              setShowTimePicker(true);
+            }
           }}
           positiveButton={{ label: "OK", textColor: "green" }}
           negativeButton={{ label: "Cancelar", textColor: "red" }}
@@ -67,14 +74,15 @@ export function DateTimePicker({
           design="material"
           mode="time"
           onDismiss={handleDismiss}
-          value={value ? addHours(value, 3) : new Date()}
-          onValueChange={(time: DateTimePickerChangeEvent) => {
-            const finalDateTime = wrapDateTime(
-              timePickerConverter(time),
-              previousValue || dateReturn,
-            );
+          value={initialDate}
+          onValueChange={(_, time) => {
+            if (time) {
+              const baseDate =
+                previousValue || dateReturn || value || preSelectedDay;
 
-            setDateTimeValue(finalDateTime);
+              const finalDateTime = wrapDateTime(time, baseDate);
+              setDateTimeValue(finalDateTime);
+            }
             setShowTimePicker(false);
           }}
         />
@@ -93,9 +101,13 @@ export function DateTimePicker({
         />
         <Pressable
           disabled={disabled}
-          onPress={() =>
-            previousValue ? setShowTimePicker(true) : setShowDayPicker(true)
-          }
+          onPress={() => {
+            if (previousValue || preSelectedDay) {
+              setShowTimePicker(true);
+            } else {
+              setShowDayPicker(true);
+            }
+          }}
           style={disabled ? styles.disabledButton : styles.button}
         >
           <Icon

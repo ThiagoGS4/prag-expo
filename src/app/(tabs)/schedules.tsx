@@ -2,12 +2,24 @@ import CustomCalendar from "@/components/calendar";
 import { DateTimePicker } from "@/components/date-time-picker";
 import { DropdownPicker } from "@/components/dropdown-picker";
 import { ThemedView } from "@/components/themed-view";
-import { getDateStatus, getDotDateColor, parseDate } from "@/helpers/utils";
+import { FancyButton } from "@/components/ui/fancy-button";
+import { getDotDateColor, parseDate } from "@/helpers/utils";
 import { axiosInstance } from "@/services/api";
-import { addHours, format, parseISO } from "date-fns";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+
+interface IFormData {
+  id?: number;
+  scheduled_start?: Date;
+  scheduled_end?: Date;
+  notes?: string;
+  properties?: number;
+  plagues?: number;
+  service?: number;
+  status?: number;
+  editing?: boolean;
+}
 
 interface ISchedule {
   id: number;
@@ -29,56 +41,14 @@ interface Properties {
   name: string;
 }
 
-interface IFormData {
-  id?: number;
-  scheduled_start?: Date;
-  scheduled_end?: Date;
-  notes?: string;
-  properties?: number;
-  plagues?: number;
-  service?: number;
-  status?: number;
-  editing?: boolean;
-}
-
 export default function SchedulesScreen() {
   const [scheduleList, setScheduleList] = useState<ISchedule[]>([]);
   const [openModal, setOpenModal] = useState(false);
   const [mainForm, setMainForm] = useState<IFormData>();
-  const [deleteId, setDeleteId] = useState<number>();
-  const [deleteModal, setDeleteModal] = useState(false);
   const [plagueList, setPlagueList] = useState();
   const [statusList, setStatusList] = useState();
   const [serviceList, setServiceList] = useState();
   const [propertyList, setPropertyList] = useState();
-  const [isEditing, setIsEditing] = useState(false);
-  // useMemo
-  const agendaSections = useMemo(() => {
-    if (!scheduleList || scheduleList.length === 0) return [];
-
-    const grouped: Record<string, any[]> = {};
-
-    scheduleList.forEach((item) => {
-      const formattedDate = parseDate(item.scheduled_start);
-      if (!grouped[formattedDate]) {
-        grouped[formattedDate] = [];
-      }
-      grouped[formattedDate].push({
-        name: item.properties.name,
-        from: format(addHours(item.scheduled_start, 3), "HH:mm"),
-        to: format(addHours(item.scheduled_end, 3), "HH:mm"),
-        status: getDateStatus(item.scheduled_start, item.status.name),
-        formData: item,
-      });
-    });
-
-    const formatedToSections = Object.keys(grouped).map((dateKey) => ({
-      title: dateKey,
-      data: grouped[dateKey],
-    }));
-
-    return formatedToSections;
-  }, [scheduleList]);
 
   const multiDotData = useMemo(() => {
     if (!scheduleList || scheduleList.length === 0) return {};
@@ -110,6 +80,26 @@ export default function SchedulesScreen() {
       getSchedules();
     }, []),
   );
+
+  const day = new Date().toLocaleDateString("pt-BR", {
+    day: "2-digit",
+  });
+
+  const month = new Date()
+    .toLocaleDateString("pt-BR", {
+      month: "long",
+    })
+    .slice(0, 3);
+
+  const weekDayFull = new Intl.DateTimeFormat("pt-BR", {
+    weekday: "long",
+  }).format(new Date());
+
+  function closeClean() {
+    setOpenModal(false);
+    setMainForm(undefined);
+  }
+
   useFocusEffect(
     useCallback(() => {
       const getPlagues = async () => {
@@ -158,128 +148,26 @@ export default function SchedulesScreen() {
     }, []),
   );
 
-  // functions:
-
-  function openEditModal(formData?: ISchedule) {
-    setIsEditing(true);
-    setMainForm({
-      id: formData?.id,
-      scheduled_start: formData?.scheduled_start
-        ? parseISO(formData.scheduled_start)
-        : undefined,
-      scheduled_end: formData?.scheduled_end
-        ? parseISO(formData!.scheduled_end)
-        : undefined,
-      plagues: formData?.plagues.id,
-      properties: formData?.properties.id,
-      status: formData?.status.id,
-      service: formData?.service.id,
-    });
-    setOpenModal(true);
-  }
-
-  function openDeleteModal(id: number) {
-    setDeleteId(id);
-    setDeleteModal(true);
-  }
-
-  function closeClean() {
-    setIsEditing(false);
-    setOpenModal(false);
-    setDeleteModal(false);
-    setMainForm(undefined);
-    setDeleteId(undefined);
-  }
-
   async function submitForm() {
-    if (isEditing) {
-      try {
-        await axiosInstance.put("/alterarSchedules", mainForm);
-        try {
-          const resp = await axiosInstance.get("/schedules");
-          setScheduleList(resp.data);
-          setOpenModal(false);
-        } catch (error) {
-          console.error("Erro ao buscar agendamentos:", error);
-        }
-      } catch (error) {
-        console.error("Erro ao editar agendamento:", error);
-      }
-    } else {
-      try {
-        await axiosInstance.post("/inserirSchedules", mainForm);
-        try {
-          const resp = await axiosInstance.get("/schedules");
-          setScheduleList(resp.data);
-          setOpenModal(false);
-        } catch (error) {
-          console.error("Erro ao buscar agendamentos:", error);
-        }
-      } catch (error) {
-        console.error("Erro ao inserir agendamento:", error);
-      }
-    }
-  }
-
-  async function deleteSchedule() {
-    if (!deleteId) return;
     try {
-      await axiosInstance.delete(`/schedules/${deleteId}`);
+      await axiosInstance.post("/inserirSchedules", mainForm);
       try {
-        const resp = await axiosInstance.get("/schedules");
+        const resp = await axiosInstance.get(`/schedules`);
         setScheduleList(resp.data);
         closeClean();
+        setOpenModal(false);
       } catch (error) {
-        console.error("Erro ao atualizar lista após deletar:", error);
+        console.error("Erro ao buscar agendamentos:", error);
       }
     } catch (error) {
-      console.error("Erro ao deletar agendamento:", error);
+      console.error("Erro ao inserir agendamento:", error);
     }
   }
-
-  const day = new Date().toLocaleDateString("pt-BR", {
-    day: "2-digit",
-  });
-
-  const month = new Date()
-    .toLocaleDateString("pt-BR", {
-      month: "long",
-    })
-    .slice(0, 3);
-
-  const weekDayFull = new Intl.DateTimeFormat("pt-BR", {
-    weekday: "long",
-  }).format(new Date());
 
   return (
     <ThemedView style={styles.container}>
-      <Modal visible={deleteModal} transparent={true}>
-        <View style={styles.container}>
-          <View style={styles.formModalBody}>
-            <Text
-              style={{
-                fontSize: 16,
-                textAlign: "center",
-                marginBottom: 20,
-              }}
-            >
-              Deseja realmente excluir este agendamento?
-            </Text>
-            <View style={styles.buttonAlign}>
-              <Pressable onTouchEnd={() => closeClean()}>
-                <Text style={{ color: "#000000" }}>Cancelar</Text>
-              </Pressable>
-              <Pressable onTouchEnd={() => deleteSchedule()}>
-                <Text style={{ color: "red", fontWeight: "bold" }}>
-                  Excluir
-                </Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
       <Modal visible={openModal} transparent={true}>
-        <View style={styles.container}>
+        <View style={styles.modalOverlay}>
           <View style={styles.formModalBody}>
             <DateTimePicker
               placeholder="Dia/Horário de início"
@@ -371,16 +259,21 @@ export default function SchedulesScreen() {
         >{`${weekDayFull}, ${day} de ${month}`}</Text>
       </View>
       <View style={styles.calendarContainer}>
-        <CustomCalendar
-          agendaSections={agendaSections}
-          multiDots={multiDotData}
-          openUpsertModal={openEditModal}
-          openDeleteModal={openDeleteModal}
-        />
+        <CustomCalendar multiDots={multiDotData} />
       </View>
-      <Pressable style={styles.actionButton} onPress={() => setOpenModal(true)}>
-        <Text style={styles.buttonText}>+ Novo agendamento</Text>
-      </Pressable>
+
+      <View style={{ alignItems: "center" }}>
+        <FancyButton
+          icon="plus"
+          bgColor="#1f6f5b"
+          fontColor="#FFFFFF"
+          width={320}
+          height={50}
+          buttonFunc={() => setOpenModal(true)}
+        >
+          Novo agendamento
+        </FancyButton>
+      </View>
     </ThemedView>
   );
 }
@@ -408,12 +301,14 @@ const styles = StyleSheet.create({
     color: "#1f6f5b",
   },
   calendarContainer: {
-    flex: 1,
+    minHeight: 350,
     marginHorizontal: "4%",
     backgroundColor: "#ffffff",
     borderColor: "#d9d9d9",
     borderWidth: 1,
     borderRadius: 16,
+    overflow: "hidden",
+    marginBottom: 24,
   },
   actionButton: {
     padding: 10,
@@ -434,14 +329,25 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F3F6F5",
   },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
   formModalBody: {
+    width: "90%",
     borderRadius: 20,
     backgroundColor: "#FFFFFF",
     padding: 20,
-    margin: "15%",
     display: "flex",
     flexDirection: "column",
     gap: 10,
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
   inputBox: {
     padding: 7,
