@@ -2,7 +2,7 @@ import SchedulesCards from "@/components/schedules-cards";
 import { ThemedView } from "@/components/themed-view";
 import { FancyButton } from "@/components/ui/fancy-button";
 import { MaxContentWidth, Spacing } from "@/constants/theme";
-import { extractTokenClaims } from "@/helpers/utils";
+import { extractTokenClaims, getFullWrittenDay } from "@/helpers/utils";
 import { axiosInstance } from "@/services/api";
 import {
   addDays,
@@ -52,17 +52,6 @@ export default function HomeScreen() {
     }[];
   }>();
   const [username, setUsername] = useState("");
-
-  const dataAtual = new Date();
-  const diaNumero = dataAtual.getDate();
-
-  const diaSemanaExtenso = new Intl.DateTimeFormat("pt-BR", {
-    weekday: "long",
-  }).format(dataAtual);
-
-  const mesExtenso = new Intl.DateTimeFormat("pt-BR", {
-    month: "long",
-  }).format(dataAtual);
 
   useFocusEffect(
     useCallback(() => {
@@ -136,9 +125,7 @@ export default function HomeScreen() {
         >
           <View style={styles.pannel}>
             <Text style={styles.title}>Domus Target</Text>
-            <Text style={styles.subtitle}>
-              {diaSemanaExtenso}, {diaNumero} de {mesExtenso}
-            </Text>
+            <Text style={styles.subtitle}>{getFullWrittenDay()}</Text>
           </View>
           <View>
             <Text style={styles.subsections}> Serviços</Text>

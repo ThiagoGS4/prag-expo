@@ -1,16 +1,19 @@
+import { Spacing } from "@/constants/theme";
 import { isIsoDateString } from "@/helpers/utils";
 import { Feather as Icon } from "@react-native-vector-icons/feather/static";
 import { format, isDate, parseISO } from "date-fns";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
-    Modal,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
+import { Dropdown } from "react-native-element-dropdown";
 import { Row, Rows, Table } from "react-native-table-component";
+import { FancyButton } from "./ui/fancy-button";
 
 type IDataTable = {
   headers?: string[];
@@ -34,6 +37,33 @@ export function DataTable({
 }: IDataTable) {
   const [jsonModal, setJsonModal] = useState(false);
   const [jsonView, setJsonView] = useState("");
+  const [startIndex, setStartIndex] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(
+    dataList.length < 5 ? dataList.length : 5,
+  );
+
+  useEffect(() => {
+    if (dataList.length > 0) {
+      setRowsPerPage((atual) => {
+        if (dataList.length < 5) return dataList.length;
+
+        if (atual > dataList.length) return dataList.length;
+
+        if (atual === 0) return 5;
+
+        return atual;
+      });
+    }
+  }, [dataList.length]);
+
+  // mapeando index
+  const rangeDataComp = dataList
+    .map((item, index) => ({
+      ...item,
+      index,
+    }))
+    .slice(startIndex, startIndex + rowsPerPage);
+
   const baseHeaders = headers?.length
     ? headers
     : dataList.length > 0
@@ -58,8 +88,10 @@ export function DataTable({
     setJsonView(content);
     setJsonModal(true);
   };
-  const listData = dataList.map((dataListElem) => {
-    const rowValues = Object.values(dataListElem).map((value) => {
+  const listData = rangeDataComp.map((rangeDataCompElem) => {
+    const { index, ...dadosReais } = rangeDataCompElem;
+
+    const rowValues = Object.values(dadosReais).map((value) => {
       if (value === null || value === undefined) return "";
       if (isIsoDateString(value))
         return format(parseISO(value as string), "dd/MM/yyyy HH:mm");
@@ -90,10 +122,10 @@ export function DataTable({
     if (actions?.length) {
       rowValues.push(
         <View style={styles.actionsContainer}>
-          {actions.map((act, index) => (
+          {actions.map((act, indexAction) => (
             <Pressable
-              key={index}
-              onPress={() => act.onPress(dataListElem)}
+              key={indexAction}
+              onPress={() => act.onPress(rangeDataCompElem)}
               style={styles.actionButton}
             >
               {act.icon && (
@@ -121,6 +153,31 @@ export function DataTable({
 
     return rowValues;
   });
+  // paginação da tabela
+
+  const allSchedules = dataList || [];
+
+  const firstItemIndex = rangeDataComp[0]?.index ?? 0;
+  const lastItemIndex = rangeDataComp[rangeDataComp.length - 1]?.index ?? -1;
+  const isPrevDisabled = rangeDataComp.length === 0 || firstItemIndex === 0;
+  const isNextDisabled =
+    allSchedules.length === 0 || lastItemIndex >= allSchedules.length - 1;
+
+  // lidando com botão próximo
+  function nextBtn() {
+    setStartIndex(startIndex + rowsPerPage);
+  }
+
+  // lidando com botão anterior
+  function prevBtn() {
+    const indexPrev = startIndex - rowsPerPage;
+
+    if (indexPrev < 0) {
+      setStartIndex(0);
+    } else {
+      setStartIndex(indexPrev);
+    }
+  }
 
   return (
     <View style={styles.container}>
@@ -144,27 +201,107 @@ export function DataTable({
       </Modal>
       <ScrollView>
         <ScrollView horizontal bounces={false}>
-          <Table borderStyle={{ borderWidth: 1, borderColor: "#E0E5EC" }}>
-            <Row
-              data={listHeaders}
-              widthArr={widthArr}
-              style={styles.head}
-              textStyle={styles.headText}
-            />
-            <Rows
-              data={listData}
-              widthArr={widthArr}
-              style={styles.row}
-              textStyle={styles.text}
-            />
-          </Table>
+          <View>
+            <Table borderStyle={{ borderWidth: 0 }}>
+              <Row
+                data={listHeaders}
+                widthArr={widthArr}
+                style={styles.head}
+                textStyle={styles.headText}
+              />
+            </Table>
+            <Table borderStyle={{ borderWidth: 1, borderColor: "#000000" }}>
+              <Rows
+                data={listData}
+                widthArr={widthArr}
+                style={styles.row}
+                textStyle={styles.text}
+              />
+            </Table>
+          </View>
         </ScrollView>
       </ScrollView>
+      <View style={styles.pageButtons}>
+        <FancyButton
+          disabled={isPrevDisabled}
+          buttonFunc={() => prevBtn()}
+          icon="arrow-left"
+          width={70}
+        />
+
+        <View style={styles.paginationCenter}>
+          <Dropdown
+            style={styles.dropdownStyle}
+            data={Array.from({ length: dataList.length + 1 }, (_, index) => ({
+              index: index.toString(),
+              value: index,
+            }))}
+            labelField={"index"}
+            valueField={"value"}
+            placeholder="ex. 15"
+            placeholderStyle={{ color: "#858585" }}
+            autoScroll={false}
+            value={rowsPerPage}
+            onChange={(item) => setRowsPerPage(item.value)}
+            search={true}
+            searchField="index"
+            renderLeftIcon={() => (
+              <Icon
+                name="chevron-down"
+                size={20}
+                color="black"
+                style={{ marginRight: 8 }}
+              />
+            )}
+            renderRightIcon={() => null}
+          />
+
+          <Text style={styles.paginationText}>-</Text>
+          <Text style={styles.paginationText}>
+            {`${Math.ceil((startIndex + 1 - rowsPerPage) / rowsPerPage) + 1} de ${Math.ceil(dataList.length / rowsPerPage)}`}
+          </Text>
+        </View>
+
+        <FancyButton
+          disabled={isNextDisabled}
+          buttonFunc={() => nextBtn()}
+          icon="arrow-right"
+          width={70}
+        />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  pageButtons: {
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: Spacing.two,
+    paddingHorizontal: Spacing.four,
+    alignItems: "center",
+  },
+  paginationCenter: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  dropdownStyle: {
+    width: 74,
+    height: 35,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#CCCCCC",
+    borderRadius: 8,
+    paddingHorizontal: 8,
+  },
+  paginationText: {
+    fontSize: 14,
+    color: "#858585",
+    fontWeight: "500",
+  },
   container: {
     flex: 1,
     padding: 16,
@@ -172,13 +309,16 @@ const styles = StyleSheet.create({
   },
   head: {
     height: 50,
-    backgroundColor: "#388cf9",
+    backgroundColor: "#E5E5E5",
+    borderWidth: 1,
+    borderColor: "#000000",
+    borderBottomWidth: 0,
   },
   headText: {
     fontSize: 14,
     fontWeight: "bold",
     textAlign: "center",
-    color: "#FFFFFF",
+    color: "#000000",
   },
   row: {
     backgroundColor: "#FFFFFF",

@@ -129,8 +129,6 @@ export default function schedulesDayCards() {
           );
           const dayData = resp.data || [];
 
-          console.log("dayData -> ", dayData);
-
           setAllDaySchedules(dayData);
         } catch (error) {
           console.error("Erro ao buscar dados do painel:", error);

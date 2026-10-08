@@ -3,11 +3,12 @@ import { DateTimePicker } from "@/components/date-time-picker";
 import { DropdownPicker } from "@/components/dropdown-picker";
 import { ThemedView } from "@/components/themed-view";
 import { FancyButton } from "@/components/ui/fancy-button";
-import { getDotDateColor, parseDate } from "@/helpers/utils";
+import { getDotDateColor, getFullWrittenDay, parseDate } from "@/helpers/utils";
 import { axiosInstance } from "@/services/api";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 interface IFormData {
   id?: number;
@@ -81,20 +82,6 @@ export default function SchedulesScreen() {
     }, []),
   );
 
-  const day = new Date().toLocaleDateString("pt-BR", {
-    day: "2-digit",
-  });
-
-  const month = new Date()
-    .toLocaleDateString("pt-BR", {
-      month: "long",
-    })
-    .slice(0, 3);
-
-  const weekDayFull = new Intl.DateTimeFormat("pt-BR", {
-    weekday: "long",
-  }).format(new Date());
-
   function closeClean() {
     setOpenModal(false);
     setMainForm(undefined);
@@ -166,114 +153,114 @@ export default function SchedulesScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <Modal visible={openModal} transparent={true}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.formModalBody}>
-            <DateTimePicker
-              placeholder="Dia/Horário de início"
-              value={mainForm?.scheduled_start}
-              setDateTimeValue={(value) => {
-                setMainForm((prev) => ({
-                  ...prev,
-                  scheduled_start: value,
-                }));
-              }}
-            ></DateTimePicker>
-            <DateTimePicker
-              placeholder="Horário de fim"
-              value={mainForm?.scheduled_end}
-              setDateTimeValue={(value) => {
-                setMainForm((prev) => ({
-                  ...prev,
-                  scheduled_end: value,
-                }));
-              }}
-              previousValue={mainForm?.scheduled_start}
-              disabled={!mainForm?.scheduled_start}
-            ></DateTimePicker>
+      <SafeAreaView>
+        <Modal visible={openModal} transparent={true}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.formModalBody}>
+              <DateTimePicker
+                placeholder="Dia/Horário de início"
+                value={mainForm?.scheduled_start}
+                setDateTimeValue={(value) => {
+                  setMainForm((prev) => ({
+                    ...prev,
+                    scheduled_start: value,
+                  }));
+                }}
+              ></DateTimePicker>
+              <DateTimePicker
+                placeholder="Horário de fim"
+                value={mainForm?.scheduled_end}
+                setDateTimeValue={(value) => {
+                  setMainForm((prev) => ({
+                    ...prev,
+                    scheduled_end: value,
+                  }));
+                }}
+                previousValue={mainForm?.scheduled_start}
+                disabled={!mainForm?.scheduled_start}
+              ></DateTimePicker>
 
-            <DropdownPicker
-              dataList={plagueList as any}
-              value={mainForm?.plagues}
-              setValueFather={(value) =>
-                setMainForm((prev) => ({
-                  ...prev,
-                  plagues: value ?? undefined,
-                }))
-              }
-              itemLabel="Selecionar praga"
-            ></DropdownPicker>
+              <DropdownPicker
+                dataList={plagueList as any}
+                value={mainForm?.plagues}
+                setValueFather={(value) =>
+                  setMainForm((prev) => ({
+                    ...prev,
+                    plagues: value ?? undefined,
+                  }))
+                }
+                itemLabel="Selecionar praga"
+              ></DropdownPicker>
 
-            <DropdownPicker
-              dataList={propertyList as any}
-              value={mainForm?.properties}
-              setValueFather={(value) =>
-                setMainForm((prev) => ({
-                  ...prev,
-                  properties: value ?? undefined,
-                }))
-              }
-              itemLabel="Selecionar propriedade"
-            ></DropdownPicker>
+              <DropdownPicker
+                dataList={propertyList as any}
+                value={mainForm?.properties}
+                setValueFather={(value) =>
+                  setMainForm((prev) => ({
+                    ...prev,
+                    properties: value ?? undefined,
+                  }))
+                }
+                itemLabel="Selecionar propriedade"
+              ></DropdownPicker>
 
-            <DropdownPicker
-              dataList={statusList as any}
-              value={mainForm?.status}
-              setValueFather={(value) =>
-                setMainForm((prev) => ({
-                  ...prev,
-                  status: value ?? undefined,
-                }))
-              }
-              itemLabel="Selecionar status"
-            ></DropdownPicker>
+              <DropdownPicker
+                dataList={statusList as any}
+                value={mainForm?.status}
+                setValueFather={(value) =>
+                  setMainForm((prev) => ({
+                    ...prev,
+                    status: value ?? undefined,
+                  }))
+                }
+                itemLabel="Selecionar status"
+              ></DropdownPicker>
 
-            <DropdownPicker
-              dataList={serviceList as any}
-              value={mainForm?.service}
-              setValueFather={(value) =>
-                setMainForm((prev) => ({
-                  ...prev,
-                  service: value ?? undefined,
-                }))
-              }
-              itemLabel="Selecionar serviço"
-            ></DropdownPicker>
+              <DropdownPicker
+                dataList={serviceList as any}
+                value={mainForm?.service}
+                setValueFather={(value) =>
+                  setMainForm((prev) => ({
+                    ...prev,
+                    service: value ?? undefined,
+                  }))
+                }
+                itemLabel="Selecionar serviço"
+              ></DropdownPicker>
 
-            <View style={styles.buttonAlign}>
-              <Pressable onTouchEnd={() => closeClean()}>
-                <Text style={{ color: "#000000" }}>Fechar</Text>
-              </Pressable>
+              <View style={styles.buttonAlign}>
+                <Pressable onTouchEnd={() => closeClean()}>
+                  <Text style={{ color: "#000000" }}>Fechar</Text>
+                </Pressable>
 
-              <Pressable onTouchEnd={() => submitForm()}>
-                <Text style={{ color: "#000000" }}>Enviar</Text>
-              </Pressable>
+                <Pressable onTouchEnd={() => submitForm()}>
+                  <Text style={{ color: "#000000" }}>Enviar</Text>
+                </Pressable>
+              </View>
             </View>
           </View>
+        </Modal>
+        <View style={styles.pannel}>
+          <Text style={styles.title}>Agendamento</Text>
+          <Text style={styles.subtitle}>{getFullWrittenDay()}</Text>
         </View>
-      </Modal>
-      <View style={styles.pannel}>
-        <Text style={styles.title}>Agendamento</Text>
-        <Text
-          style={styles.subtitle}
-        >{`${weekDayFull}, ${day} de ${month}`}</Text>
-      </View>
-      <View style={styles.calendarContainer}>
-        <CustomCalendar multiDots={multiDotData} />
-      </View>
+        <View style={styles.calendarContainer}>
+          <CustomCalendar multiDots={multiDotData} />
+        </View>
 
-      <View style={{ alignItems: "center" }}>
-        <FancyButton
-          icon="plus"
-          bgColor="#1f6f5b"
-          fontColor="#FFFFFF"
-          width={320}
-          height={50}
-          buttonFunc={() => setOpenModal(true)}
-        >
-          Novo agendamento
-        </FancyButton>
-      </View>
+        <View style={{ alignItems: "center" }}>
+          <FancyButton
+            icon="plus"
+            bgColor="#1f6f5b"
+            fontColor="#FFFFFF"
+            width={320}
+            height={50}
+            buttonFunc={() => setOpenModal(true)}
+          >
+            Novo agendamento
+          </FancyButton>
+        </View>
+      </SafeAreaView>
     </ThemedView>
   );
 }

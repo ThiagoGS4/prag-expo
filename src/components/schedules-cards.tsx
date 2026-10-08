@@ -199,16 +199,11 @@ export default function SchedulesCards({
                     color="red"
                     size={26}
                     onPress={() => {
-                      console.log("item.formData.id! --> ", item.formData.id);
                       openDeleteModal!(item.formData.id!);
                     }}
                   />
                   <Icon
                     onPress={() => {
-                      console.log(
-                        "item.fullScheduleData --> ",
-                        item.fullScheduleData,
-                      );
                       openUpsertModal!(item.fullScheduleData!);
                     }}
                     name="edit"

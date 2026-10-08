@@ -128,3 +128,19 @@ export function isIsoDateString(value: any): boolean {
     /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?$/;
   return isoRegex.test(value);
 }
+
+export function getFullWrittenDay() {
+  const day = new Date().toLocaleDateString("pt-BR", {
+    day: "2-digit",
+  });
+
+  const month = new Date().toLocaleDateString("pt-BR", {
+    month: "long",
+  });
+
+  const weekDayFull = new Intl.DateTimeFormat("pt-BR", {
+    weekday: "long",
+  }).format(new Date());
+
+  return `${weekDayFull}, ${day} de ${month}`;
+}
