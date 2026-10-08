@@ -2,7 +2,8 @@ import { Spacing } from "@/constants/theme";
 import { isIsoDateString } from "@/helpers/utils";
 import { Feather as Icon } from "@react-native-vector-icons/feather/static";
 import { format, isDate, parseISO } from "date-fns";
-import { useEffect, useState } from "react";
+import { useFocusEffect } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Modal,
   Pressable,
@@ -38,19 +39,28 @@ export function DataTable({
   const [jsonModal, setJsonModal] = useState(false);
   const [jsonView, setJsonView] = useState("");
   const [startIndex, setStartIndex] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(
-    dataList.length < 5 ? dataList.length : 5,
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+
+  const dataLenRef = useRef(dataList.length);
+  useEffect(() => {
+    dataLenRef.current = dataList.length;
+  }, [dataList.length]);
+
+  useFocusEffect(
+    useCallback(() => {
+      setStartIndex(0);
+
+      const len = dataLenRef.current;
+      setRowsPerPage(len > 0 && len < 5 ? len : 5);
+    }, []),
   );
 
   useEffect(() => {
     if (dataList.length > 0) {
       setRowsPerPage((atual) => {
         if (dataList.length < 5) return dataList.length;
-
         if (atual > dataList.length) return dataList.length;
-
         if (atual === 0) return 5;
-
         return atual;
       });
     }
@@ -232,9 +242,9 @@ export function DataTable({
         <View style={styles.paginationCenter}>
           <Dropdown
             style={styles.dropdownStyle}
-            data={Array.from({ length: dataList.length + 1 }, (_, index) => ({
-              index: index.toString(),
-              value: index,
+            data={Array.from({ length: dataList.length }, (_, index) => ({
+              index: (index + 1).toString(),
+              value: index + 1,
             }))}
             labelField={"index"}
             valueField={"value"}

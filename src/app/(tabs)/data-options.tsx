@@ -6,6 +6,7 @@ import { FancyButton } from "@/components/ui/fancy-button";
 import { MaxContentWidth, Spacing } from "@/constants/theme";
 import { getFullWrittenDay } from "@/helpers/utils";
 import { axiosInstance } from "@/services/api";
+import { Feather as Icon } from "@react-native-vector-icons/feather/static";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import {
@@ -19,8 +20,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-type EntityType = "service" | "status" | "plague";
-
 interface IFormData {
   id?: number;
   name?: string;
@@ -31,46 +30,39 @@ export default function DataOptionsScreen() {
   const [statusList, setStatusList] = useState<any[]>([]);
   const [plagueList, setPlagueList] = useState<any[]>([]);
 
-  const [activeEntity, setActiveEntity] = useState<EntityType>("service");
-  const [openModal, setOpenModal] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [deleteData, setDeleteData] = useState<{ id: number; name: string }>();
-  const [deleteModal, setDeleteModal] = useState(false);
-  const [mainForm, setMainForm] = useState<IFormData>();
+  const [openService, setOpenService] = useState(false);
+  const [isEditingService, setIsEditingService] = useState(false);
+  const [formService, setFormService] = useState<IFormData>();
+  const [deleteServiceModal, setDeleteServiceModal] = useState(false);
+  const [deleteServiceData, setDeleteServiceData] = useState<{
+    id: number;
+    name: string;
+  }>();
 
-  const endpoints = {
-    service: {
-      get: "/services",
-      post: "/inserirServices",
-      put: "/alterarServices",
-      del: "/services",
-      key: "serviceName",
-      label: "Serviço",
-    },
-    status: {
-      get: "/status",
-      post: "/inserirStatus",
-      put: "/alterarStatus",
-      del: "/status",
-      key: "statusName",
-      label: "Status",
-    },
-    plague: {
-      get: "/plagues",
-      post: "/inserirPlagues",
-      put: "/alterarPlagues",
-      del: "/plagues",
-      key: "plagueName",
-      label: "Praga",
-    },
-  };
+  const [openStatus, setOpenStatus] = useState(false);
+  const [isEditingStatus, setIsEditingStatus] = useState(false);
+  const [formStatus, setFormStatus] = useState<IFormData>();
+  const [deleteStatusModal, setDeleteStatusModal] = useState(false);
+  const [deleteStatusData, setDeleteStatusData] = useState<{
+    id: number;
+    name: string;
+  }>();
+
+  const [openPlague, setOpenPlague] = useState(false);
+  const [isEditingPlague, setIsEditingPlague] = useState(false);
+  const [formPlague, setFormPlague] = useState<IFormData>();
+  const [deletePlagueModal, setDeletePlagueModal] = useState(false);
+  const [deletePlagueData, setDeletePlagueData] = useState<{
+    id: number;
+    name: string;
+  }>();
 
   const loadData = async () => {
     try {
       const [servResp, statResp, plagResp] = await Promise.all([
-        axiosInstance.get(endpoints.service.get),
-        axiosInstance.get(endpoints.status.get),
-        axiosInstance.get(endpoints.plague.get),
+        axiosInstance.get("/services"),
+        axiosInstance.get("/status"),
+        axiosInstance.get("/plagues"),
       ]);
       setServiceList(servResp.data);
       setStatusList(statResp.data);
@@ -86,81 +78,163 @@ export default function DataOptionsScreen() {
     }, []),
   );
 
-  function openEditModal(type: EntityType, row: any) {
-    setActiveEntity(type);
-    setIsEditing(true);
-    setMainForm({
-      id: row.id,
-      name: row[endpoints[type].key],
-    });
-    setOpenModal(true);
+  function closeServiceClean() {
+    setIsEditingService(false);
+    setOpenService(false);
+    setDeleteServiceModal(false);
+    setFormService(undefined);
+    setDeleteServiceData(undefined);
   }
 
-  function openCreateModal(type: EntityType) {
-    setActiveEntity(type);
-    setIsEditing(false);
-    setMainForm({ name: "" });
-    setOpenModal(true);
-  }
-
-  function openDeleteModal(type: EntityType, id: number, name: string) {
-    setActiveEntity(type);
-    setDeleteData({ id, name });
-    setDeleteModal(true);
-  }
-
-  function closeClean() {
-    setIsEditing(false);
-    setOpenModal(false);
-    setDeleteModal(false);
-    setMainForm(undefined);
-    setDeleteData(undefined);
-  }
-
-  async function submitForm() {
-    const config = endpoints[activeEntity];
-    const payload: any = {};
-
-    if (isEditing) payload.id = mainForm?.id;
-    payload[config.key] = mainForm?.name;
+  async function submitService() {
+    const payload: any = { serviceName: formService?.name };
+    if (isEditingService) payload.id = formService?.id;
 
     try {
-      if (isEditing) {
-        await axiosInstance.put(config.put, payload);
-      } else {
-        await axiosInstance.post(config.post, payload);
-      }
+      if (isEditingService)
+        await axiosInstance.put("/alterarServices", payload);
+      else await axiosInstance.post("/inserirServices", payload);
       await loadData();
-      closeClean();
+      closeServiceClean();
     } catch (error) {
-      console.error(`Erro ao salvar ${config.label}:`, error);
+      console.error("Erro ao salvar serviço:", error);
     }
   }
 
-  async function confirmDelete() {
-    if (!deleteData) return;
-    const config = endpoints[activeEntity];
-
+  async function confirmDeleteService() {
+    if (!deleteServiceData) return;
     try {
-      await axiosInstance.delete(`${config.del}/${deleteData.id}`);
+      await axiosInstance.delete(`/services/${deleteServiceData.id}`);
       await loadData();
-      closeClean();
+      closeServiceClean();
     } catch (error) {
-      console.error(`Erro ao deletar ${config.label}:`, error);
+      console.error("Erro ao deletar serviço:", error);
     }
   }
 
-  const getActions = (type: EntityType) => [
+  const serviceActions = [
     {
       icon: "edit",
       iconColor: "#43a047",
-      onPress: (row: any) => openEditModal(type, row),
+      onPress: (row: any) => {
+        setFormService({ id: row.id, name: row.serviceName });
+        setIsEditingService(true);
+        setOpenService(true);
+      },
     },
     {
       icon: "trash-2",
       iconColor: "red",
-      onPress: (row: any) =>
-        openDeleteModal(type, row.id, row[endpoints[type].key]),
+      onPress: (row: any) => {
+        setDeleteServiceData({ id: row.id, name: row.serviceName });
+        setDeleteServiceModal(true);
+      },
+    },
+  ];
+
+  function closeStatusClean() {
+    setIsEditingStatus(false);
+    setOpenStatus(false);
+    setDeleteStatusModal(false);
+    setFormStatus(undefined);
+    setDeleteStatusData(undefined);
+  }
+
+  async function submitStatus() {
+    const payload: any = { statusName: formStatus?.name };
+    if (isEditingStatus) payload.id = formStatus?.id;
+
+    try {
+      if (isEditingStatus) await axiosInstance.put("/alterarStatus", payload);
+      else await axiosInstance.post("/inserirStatus", payload);
+      await loadData();
+      closeStatusClean();
+    } catch (error) {
+      console.error("Erro ao salvar status:", error);
+    }
+  }
+
+  async function confirmDeleteStatus() {
+    if (!deleteStatusData) return;
+    try {
+      await axiosInstance.delete(`/status/${deleteStatusData.id}`);
+      await loadData();
+      closeStatusClean();
+    } catch (error) {
+      console.error("Erro ao deletar status:", error);
+    }
+  }
+
+  const statusActions = [
+    {
+      icon: "edit",
+      iconColor: "#43a047",
+      onPress: (row: any) => {
+        setFormStatus({ id: row.id, name: row.statusName });
+        setIsEditingStatus(true);
+        setOpenStatus(true);
+      },
+    },
+    {
+      icon: "trash-2",
+      iconColor: "red",
+      onPress: (row: any) => {
+        setDeleteStatusData({ id: row.id, name: row.statusName });
+        setDeleteStatusModal(true);
+      },
+    },
+  ];
+
+  function closePlagueClean() {
+    setIsEditingPlague(false);
+    setOpenPlague(false);
+    setDeletePlagueModal(false);
+    setFormPlague(undefined);
+    setDeletePlagueData(undefined);
+  }
+
+  async function submitPlague() {
+    const payload: any = { plagueName: formPlague?.name };
+    if (isEditingPlague) payload.id = formPlague?.id;
+
+    try {
+      if (isEditingPlague) await axiosInstance.put("/alterarPlagues", payload);
+      else await axiosInstance.post("/inserirPlagues", payload);
+      await loadData();
+      closePlagueClean();
+    } catch (error) {
+      console.error("Erro ao salvar praga:", error);
+    }
+  }
+
+  async function confirmDeletePlague() {
+    if (!deletePlagueData) return;
+    try {
+      await axiosInstance.delete(`/plagues/${deletePlagueData.id}`);
+      await loadData();
+      closePlagueClean();
+    } catch (error) {
+      console.error("Erro ao deletar praga:", error);
+    }
+  }
+
+  const plagueActions = [
+    {
+      icon: "edit",
+      iconColor: "#43a047",
+      onPress: (row: any) => {
+        setFormPlague({ id: row.id, name: row.plagueName });
+        setIsEditingPlague(true);
+        setOpenPlague(true);
+      },
+    },
+    {
+      icon: "trash-2",
+      iconColor: "red",
+      onPress: (row: any) => {
+        setDeletePlagueData({ id: row.id, name: row.plagueName });
+        setDeletePlagueModal(true);
+      },
     },
   ];
 
@@ -168,7 +242,11 @@ export default function DataOptionsScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={["top"]}>
         <View style={{ flex: 1, backgroundColor: "#F7F8FA" }}>
-          <Modal visible={deleteModal} transparent={true} animationType="fade">
+          <Modal
+            visible={deleteServiceModal}
+            transparent={true}
+            animationType="fade"
+          >
             <View style={styles.modalOverlay}>
               <View style={styles.formModalBody}>
                 <Text
@@ -178,15 +256,14 @@ export default function DataOptionsScreen() {
                     marginBottom: 20,
                   }}
                 >
-                  Deseja realmente excluir o(a){" "}
-                  {endpoints[activeEntity].label.toLowerCase()} "
-                  {deleteData?.name ?? ""}"?
+                  Deseja realmente excluir o serviço "
+                  {deleteServiceData?.name ?? ""}"?
                 </Text>
                 <View style={styles.buttonAlign}>
-                  <Pressable onTouchEnd={closeClean}>
+                  <Pressable onTouchEnd={closeServiceClean}>
                     <Text style={{ color: "#333333" }}>Cancelar</Text>
                   </Pressable>
-                  <Pressable onTouchEnd={confirmDelete}>
+                  <Pressable onTouchEnd={confirmDeleteService}>
                     <Text style={{ color: "red", fontWeight: "bold" }}>
                       Excluir
                     </Text>
@@ -196,42 +273,195 @@ export default function DataOptionsScreen() {
             </View>
           </Modal>
 
-          <Modal visible={openModal} transparent={true} animationType="fade">
+          <Modal visible={openService} transparent={true} animationType="fade">
             <View style={styles.modalOverlay}>
               <View style={styles.formModalBody}>
-                <Text style={styles.modalTitle}>
-                  {isEditing ? "Editar" : "Novo"}{" "}
-                  {endpoints[activeEntity].label}
-                </Text>
+                <View
+                  style={{ flexDirection: "row", gap: 6, marginBottom: 10 }}
+                >
+                  <Text style={styles.modalTitleHeader}>
+                    {isEditingService ? "Editando" : "Novo"} Serviço
+                  </Text>
+                  <Icon name="settings" size={25} />
+                </View>
                 <TextInput
-                  value={mainForm?.name}
+                  value={formService?.name}
                   onChangeText={(texto) =>
-                    setMainForm((prev) => ({
-                      ...prev,
-                      name: texto,
-                    }))
+                    setFormService((prev) => ({ ...prev, name: texto }))
                   }
-                  placeholder={`Nome do(a) ${endpoints[activeEntity].label}`}
+                  placeholder="Nome do serviço"
                   style={styles.inputBox}
                 />
                 <View style={styles.buttonAlign}>
-                  <Pressable onTouchEnd={closeClean}>
+                  <FancyButton
+                    buttonFunc={closeServiceClean}
+                    width={85}
+                    height={38}
+                  >
+                    <Text style={{ color: "#000000" }}>Cancelar</Text>
+                  </FancyButton>
+                  <FancyButton
+                    buttonFunc={submitService}
+                    disabled={!formService?.name}
+                    bgColor="#1f6f5b"
+                    fontColor="#FFFFFF"
+                    width={85}
+                    height={38}
+                  >
+                    <Text style={{ textDecorationLine: "underline" }}>
+                      {isEditingService ? "Atualizar" : "Salvar"}
+                    </Text>
+                  </FancyButton>
+                </View>
+              </View>
+            </View>
+          </Modal>
+
+          <Modal
+            visible={deleteStatusModal}
+            transparent={true}
+            animationType="fade"
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.formModalBody}>
+                <Text
+                  style={{
+                    fontSize: 16,
+                    textAlign: "center",
+                    marginBottom: 20,
+                  }}
+                >
+                  Deseja realmente excluir o status "
+                  {deleteStatusData?.name ?? ""}"?
+                </Text>
+                <View style={styles.buttonAlign}>
+                  <Pressable onTouchEnd={closeStatusClean}>
                     <Text style={{ color: "#333333" }}>Cancelar</Text>
                   </Pressable>
-                  <Pressable
-                    disabled={!mainForm?.name}
-                    onTouchEnd={submitForm}
-                    style={{ opacity: mainForm?.name ? 1 : 0.5 }}
-                  >
-                    <Text
-                      style={{
-                        color: "#43a047",
-                        fontWeight: "bold",
-                      }}
-                    >
-                      {isEditing ? "Atualizar" : "Salvar"}
+                  <Pressable onTouchEnd={confirmDeleteStatus}>
+                    <Text style={{ color: "red", fontWeight: "bold" }}>
+                      Excluir
                     </Text>
                   </Pressable>
+                </View>
+              </View>
+            </View>
+          </Modal>
+
+          <Modal visible={openStatus} transparent={true} animationType="fade">
+            <View style={styles.modalOverlay}>
+              <View style={styles.formModalBody}>
+                <View
+                  style={{ flexDirection: "row", gap: 6, marginBottom: 10 }}
+                >
+                  <Text style={styles.modalTitleHeader}>
+                    {isEditingStatus ? "Editando" : "Novo"} Status
+                  </Text>
+                  <Icon name="settings" size={25} />
+                </View>
+                <TextInput
+                  value={formStatus?.name}
+                  onChangeText={(texto) =>
+                    setFormStatus((prev) => ({ ...prev, name: texto }))
+                  }
+                  placeholder="Nome do status"
+                  style={styles.inputBox}
+                />
+                <View style={styles.buttonAlign}>
+                  <FancyButton
+                    buttonFunc={closeStatusClean}
+                    width={85}
+                    height={38}
+                  >
+                    <Text style={{ color: "#000000" }}>Cancelar</Text>
+                  </FancyButton>
+                  <FancyButton
+                    buttonFunc={submitStatus}
+                    disabled={!formStatus?.name}
+                    bgColor="#1f6f5b"
+                    fontColor="#FFFFFF"
+                    width={85}
+                    height={38}
+                  >
+                    <Text style={{ textDecorationLine: "underline" }}>
+                      {isEditingStatus ? "Atualizar" : "Salvar"}
+                    </Text>
+                  </FancyButton>
+                </View>
+              </View>
+            </View>
+          </Modal>
+
+          <Modal
+            visible={deletePlagueModal}
+            transparent={true}
+            animationType="fade"
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.formModalBody}>
+                <Text
+                  style={{
+                    fontSize: 16,
+                    textAlign: "center",
+                    marginBottom: 20,
+                  }}
+                >
+                  Deseja realmente excluir a praga "
+                  {deletePlagueData?.name ?? ""}"?
+                </Text>
+                <View style={styles.buttonAlign}>
+                  <Pressable onTouchEnd={closePlagueClean}>
+                    <Text style={{ color: "#333333" }}>Cancelar</Text>
+                  </Pressable>
+                  <Pressable onTouchEnd={confirmDeletePlague}>
+                    <Text style={{ color: "red", fontWeight: "bold" }}>
+                      Excluir
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
+            </View>
+          </Modal>
+
+          <Modal visible={openPlague} transparent={true} animationType="fade">
+            <View style={styles.modalOverlay}>
+              <View style={styles.formModalBody}>
+                <View
+                  style={{ flexDirection: "row", gap: 6, marginBottom: 10 }}
+                >
+                  <Text style={styles.modalTitleHeader}>
+                    {isEditingPlague ? "Editando" : "Nova"} Praga
+                  </Text>
+                  <Icon name="settings" size={25} />
+                </View>
+                <TextInput
+                  value={formPlague?.name}
+                  onChangeText={(texto) =>
+                    setFormPlague((prev) => ({ ...prev, name: texto }))
+                  }
+                  placeholder="Nome da praga"
+                  style={styles.inputBox}
+                />
+                <View style={styles.buttonAlign}>
+                  <FancyButton
+                    buttonFunc={closePlagueClean}
+                    width={85}
+                    height={38}
+                  >
+                    <Text style={{ color: "#000000" }}>Cancelar</Text>
+                  </FancyButton>
+                  <FancyButton
+                    buttonFunc={submitPlague}
+                    disabled={!formPlague?.name}
+                    bgColor="#1f6f5b"
+                    fontColor="#FFFFFF"
+                    width={85}
+                    height={38}
+                  >
+                    <Text style={{ textDecorationLine: "underline" }}>
+                      {isEditingPlague ? "Atualizar" : "Salvar"}
+                    </Text>
+                  </FancyButton>
                 </View>
               </View>
             </View>
@@ -245,20 +475,8 @@ export default function DataOptionsScreen() {
           <ScrollView
             contentContainerStyle={{
               paddingBottom: 40,
-              paddingTop: "15%",
             }}
           >
-            <View style={styles.pageHeader}>
-              <FancyButton
-                bgColor="#e53935"
-                padding={8}
-                buttonFunc={handleLogout}
-                icon="log-out"
-              >
-                <Text style={styles.buttonText}>Sair da conta</Text>
-              </FancyButton>
-            </View>
-
             <View style={{ gap: 8 }}>
               <ExpansionPannel label="Serviço">
                 <View style={styles.section}>
@@ -266,7 +484,7 @@ export default function DataOptionsScreen() {
                     headers={["ID", "Serviço"]}
                     dataList={serviceList}
                     keyColumn="id"
-                    actions={getActions("service")}
+                    actions={serviceActions}
                   />
                 </View>
                 <View style={{ alignItems: "center", marginBottom: 20 }}>
@@ -276,7 +494,11 @@ export default function DataOptionsScreen() {
                     fontColor="#FFFFFF"
                     width={320}
                     height={50}
-                    buttonFunc={() => openCreateModal("service")}
+                    buttonFunc={() => {
+                      setFormService({ name: "" });
+                      setIsEditingService(false);
+                      setOpenService(true);
+                    }}
                   >
                     Novo Serviço
                   </FancyButton>
@@ -289,7 +511,7 @@ export default function DataOptionsScreen() {
                     headers={["ID", "Status"]}
                     dataList={statusList}
                     keyColumn="id"
-                    actions={getActions("status")}
+                    actions={statusActions}
                   />
                 </View>
                 <View style={{ alignItems: "center", marginBottom: 20 }}>
@@ -299,20 +521,24 @@ export default function DataOptionsScreen() {
                     fontColor="#FFFFFF"
                     width={320}
                     height={50}
-                    buttonFunc={() => openCreateModal("status")}
+                    buttonFunc={() => {
+                      setFormStatus({ name: "" });
+                      setIsEditingStatus(false);
+                      setOpenStatus(true);
+                    }}
                   >
                     Novo Status
                   </FancyButton>
                 </View>
               </ExpansionPannel>
 
-              <ExpansionPannel label="Plagues">
+              <ExpansionPannel label="Pragas">
                 <View style={styles.section}>
                   <DataTable
                     headers={["ID", "Praga"]}
                     dataList={plagueList}
                     keyColumn="id"
-                    actions={getActions("plague")}
+                    actions={plagueActions}
                   />
                 </View>
                 <View style={{ alignItems: "center", marginBottom: 20 }}>
@@ -322,12 +548,26 @@ export default function DataOptionsScreen() {
                     fontColor="#FFFFFF"
                     width={320}
                     height={50}
-                    buttonFunc={() => openCreateModal("plague")}
+                    buttonFunc={() => {
+                      setFormPlague({ name: "" });
+                      setIsEditingPlague(false);
+                      setOpenPlague(true);
+                    }}
                   >
                     Nova Praga
                   </FancyButton>
                 </View>
               </ExpansionPannel>
+            </View>
+            <View style={styles.pageHeader}>
+              <FancyButton
+                bgColor="#e53935"
+                padding={8}
+                buttonFunc={handleLogout}
+                icon="log-out"
+              >
+                <Text style={styles.buttonText}>Sair da conta</Text>
+              </FancyButton>
             </View>
           </ScrollView>
         </View>
@@ -377,15 +617,11 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     alignItems: "center",
     marginBottom: 32,
-    borderBottomWidth: 1,
-    borderBottomColor: "#CCCCCC",
-    paddingBottom: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#CCCCCC",
+    paddingTop: 16,
+    marginTop: 12,
     paddingHorizontal: "4%",
-  },
-  pageTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#333333",
   },
   buttonText: {
     textAlign: "center",
@@ -415,26 +651,26 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
   },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333333",
-    marginBottom: 8,
+  modalTitleHeader: {
+    fontFamily: "Inter",
+    fontWeight: "700",
+    fontSize: 20,
+    color: "#000000",
   },
   inputBox: {
-    paddingHorizontal: 12,
-    height: 48,
+    height: 45,
+    backgroundColor: "#EAEAEA",
+    borderColor: "#D1D1D1",
     borderWidth: 1,
-    borderColor: "#CCCCCC",
     borderRadius: 8,
-    fontSize: 16,
+    paddingHorizontal: 12,
     color: "#333333",
+    fontSize: 14,
   },
   buttonAlign: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "flex-end",
-    gap: 24,
-    marginTop: 12,
+    justifyContent: "space-between",
+    marginTop: 10,
   },
 });

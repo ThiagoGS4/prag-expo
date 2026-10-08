@@ -5,9 +5,10 @@ import { ThemedView } from "@/components/themed-view";
 import { FancyButton } from "@/components/ui/fancy-button";
 import { getDotDateColor, getFullWrittenDay, parseDate } from "@/helpers/utils";
 import { axiosInstance } from "@/services/api";
+import { Feather as Icon } from "@react-native-vector-icons/feather/static";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { Modal, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 interface IFormData {
@@ -157,6 +158,21 @@ export default function SchedulesScreen() {
         <Modal visible={openModal} transparent={true}>
           <View style={styles.modalOverlay}>
             <View style={styles.formModalBody}>
+              <View
+                style={{ flexDirection: "row", gap: 4, paddingBottom: "2%" }}
+              >
+                <Text
+                  style={{
+                    fontFamily: "Inter",
+                    fontWeight: "700",
+                    fontSize: 20,
+                    color: "#000000",
+                  }}
+                >
+                  {"Novo agendamento"}
+                </Text>
+                <Icon name="calendar" size={25} />
+              </View>
               <DateTimePicker
                 placeholder="Dia/Horário de início"
                 value={mainForm?.scheduled_start}
@@ -229,13 +245,25 @@ export default function SchedulesScreen() {
               ></DropdownPicker>
 
               <View style={styles.buttonAlign}>
-                <Pressable onTouchEnd={() => closeClean()}>
-                  <Text style={{ color: "#000000" }}>Fechar</Text>
-                </Pressable>
+                <FancyButton
+                  buttonFunc={() => closeClean()}
+                  width={77}
+                  height={38}
+                >
+                  <Text style={{ color: "#000000" }}>Cancelar</Text>
+                </FancyButton>
 
-                <Pressable onTouchEnd={() => submitForm()}>
-                  <Text style={{ color: "#000000" }}>Enviar</Text>
-                </Pressable>
+                <FancyButton
+                  buttonFunc={() => submitForm()}
+                  bgColor="#1f6f5b"
+                  fontColor="#FFFFFF"
+                  width={77}
+                  height={38}
+                >
+                  <Text style={{ textDecorationLine: "underline" }}>
+                    Salvar
+                  </Text>
+                </FancyButton>
               </View>
             </View>
           </View>
@@ -309,8 +337,8 @@ const styles = StyleSheet.create({
   buttonAlign: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    gap: 30,
+    justifyContent: "space-between",
+    marginTop: 10,
   },
   container: {
     flex: 1,

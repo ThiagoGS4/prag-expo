@@ -88,11 +88,12 @@ export function DateTimePicker({
         />
       )}
 
-      {value && <Text>{placeholder}</Text>}
+      {value && <Text style={styles.label}>{placeholder}</Text>}
 
       <View style={styles.container}>
         <TextInput
           placeholder={placeholder}
+          placeholderTextColor="#888888"
           value={
             value ? lightFormat(addHours(value, 3), "dd/MM/yyyy HH:mm") : ""
           }
@@ -127,23 +128,42 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
+    width: "100%",
+  },
+  label: {
+    fontSize: 12,
+    color: "#333",
+    marginBottom: 4,
+    fontWeight: "bold",
+    paddingLeft: 2,
   },
   button: {
     flexDirection: "row",
-    backgroundColor: "#388cf9",
-    padding: 4,
-    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#1f6f5b",
+    height: 45,
+    paddingHorizontal: 14,
+    borderRadius: 8,
   },
   disabledButton: {
     flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: "#646464",
-    padding: 4,
-    borderRadius: 10,
+    height: 45,
+    paddingHorizontal: 14,
+    borderRadius: 8,
   },
   inputBox: {
-    padding: 7,
-    height: 32,
+    flex: 1,
+    height: 45,
+    backgroundColor: "#EAEAEA",
+    borderColor: "#D1D1D1",
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    color: "#333333",
+    fontSize: 14,
   },
 });

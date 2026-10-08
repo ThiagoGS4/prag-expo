@@ -5,6 +5,7 @@ import { FancyButton } from "@/components/ui/fancy-button";
 import { MaxContentWidth, Spacing } from "@/constants/theme";
 import { getFullWrittenDay } from "@/helpers/utils";
 import { axiosInstance } from "@/services/api";
+import { Feather as Icon } from "@react-native-vector-icons/feather/static";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import {
@@ -240,6 +241,19 @@ export default function PropertiesScreen() {
         <Modal visible={openModal} transparent={true} animationType="fade">
           <View style={styles.modalOverlay}>
             <View style={styles.formModalBody}>
+              <View style={{ flexDirection: "row", gap: 4 }}>
+                <Text
+                  style={{
+                    fontFamily: "Inter",
+                    fontWeight: "700",
+                    fontSize: 20,
+                    color: "#000000",
+                  }}
+                >
+                  {isEditing ? "Editando propriedade" : "Nova propriedade"}
+                </Text>
+                <Icon name="home" size={25} />
+              </View>
               <ScrollView contentContainerStyle={{ gap: 10 }}>
                 <TextInput
                   value={mainForm?.nickname}
@@ -389,13 +403,25 @@ export default function PropertiesScreen() {
               </ScrollView>
 
               <View style={styles.buttonAlign}>
-                <Pressable onTouchEnd={() => closeClean()}>
-                  <Text style={{ color: "#000000" }}>Fechar</Text>
-                </Pressable>
+                <FancyButton
+                  buttonFunc={() => closeClean()}
+                  width={77}
+                  height={38}
+                >
+                  <Text style={{ color: "#000000" }}>Cancelar</Text>
+                </FancyButton>
 
-                <Pressable onTouchEnd={() => submitForm()}>
-                  <Text style={{ color: "#000000" }}>Enviar</Text>
-                </Pressable>
+                <FancyButton
+                  buttonFunc={() => submitForm()}
+                  bgColor="#1f6f5b"
+                  fontColor="#FFFFFF"
+                  width={77}
+                  height={38}
+                >
+                  <Text style={{ textDecorationLine: "underline" }}>
+                    Salvar
+                  </Text>
+                </FancyButton>
               </View>
             </View>
           </View>
@@ -484,16 +510,19 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
   },
   inputBox: {
-    padding: 7,
-    height: 32,
+    height: 45,
+    backgroundColor: "#EAEAEA",
+    borderColor: "#D1D1D1",
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    color: "#333333",
+    fontSize: 14,
   },
   buttonAlign: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    gap: 30,
+    justifyContent: "space-between",
     marginTop: 10,
   },
 });

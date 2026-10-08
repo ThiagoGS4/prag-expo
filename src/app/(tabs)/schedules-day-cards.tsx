@@ -5,6 +5,7 @@ import { ThemedView } from "@/components/themed-view";
 import { FancyButton } from "@/components/ui/fancy-button";
 import { MaxContentWidth, Spacing } from "@/constants/theme";
 import { axiosInstance } from "@/services/api";
+import { Feather as Icon } from "@react-native-vector-icons/feather/static";
 import { format, parse, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
@@ -263,6 +264,21 @@ export default function schedulesDayCards() {
         <Modal visible={openModal} transparent={true}>
           <View style={styles.modalOverlay}>
             <View style={styles.formModalBody}>
+              <View
+                style={{ flexDirection: "row", gap: 4, paddingBottom: "2%" }}
+              >
+                <Text
+                  style={{
+                    fontFamily: "Inter",
+                    fontWeight: "700",
+                    fontSize: 20,
+                    color: "#000000",
+                  }}
+                >
+                  {isEditing ? "Editando agendamento" : "Novo agendamento"}
+                </Text>
+                <Icon name="home" size={25} />
+              </View>
               <DateTimePicker
                 placeholder="Dia/Horário de início"
                 preSelectedDay={new Date(`${selectedDate}T00:00:00.000Z`)}
@@ -336,13 +352,25 @@ export default function schedulesDayCards() {
               ></DropdownPicker>
 
               <View style={styles.buttonAlign}>
-                <Pressable onTouchEnd={() => closeClean()}>
-                  <Text style={{ color: "#000000" }}>Fechar</Text>
-                </Pressable>
+                <FancyButton
+                  buttonFunc={() => closeClean()}
+                  width={77}
+                  height={38}
+                >
+                  <Text style={{ color: "#000000" }}>Cancelar</Text>
+                </FancyButton>
 
-                <Pressable onTouchEnd={() => submitForm()}>
-                  <Text style={{ color: "#000000" }}>Enviar</Text>
-                </Pressable>
+                <FancyButton
+                  buttonFunc={() => submitForm()}
+                  bgColor="#1f6f5b"
+                  fontColor="#FFFFFF"
+                  width={77}
+                  height={38}
+                >
+                  <Text style={{ textDecorationLine: "underline" }}>
+                    Salvar
+                  </Text>
+                </FancyButton>
               </View>
             </View>
           </View>
@@ -456,7 +484,7 @@ const styles = StyleSheet.create({
   buttonAlign: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    gap: 30,
+    justifyContent: "space-between",
+    marginTop: 10,
   },
 });

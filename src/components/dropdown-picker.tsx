@@ -25,7 +25,7 @@ export function DropdownPicker({
 
   return (
     <Dropdown
-      style={[styles.dropdown, isFocus && { borderColor: "blue" }]}
+      style={styles.inputBox}
       data={dataList}
       valueField="id"
       labelField={Object.keys(dataList[0])[1]}
@@ -57,10 +57,23 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
   },
   label: {
-    marginBottom: 8,
-    fontSize: 14,
+    fontSize: 12,
+    color: "#333",
+    marginBottom: 4,
+    fontWeight: "bold",
+    paddingLeft: 2,
   },
   icon: {
     marginRight: 10,
+  },
+  inputBox: {
+    height: 45,
+    backgroundColor: "#EAEAEA",
+    borderColor: "#D1D1D1",
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    color: "#333333",
+    fontSize: 14,
   },
 });
